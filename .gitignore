@@ -8,7 +8,7 @@
 # Batch scripts
 build.bat
 error_build.bat
-latex.bat
+fluke.bat
 
 # Optional editor files
 .vscode/
