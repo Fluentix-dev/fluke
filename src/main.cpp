@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
         }
 
         fluke::Lexer lexer = fluke::Lexer(file_name, real);
-        fluke::Result<std::vector<fluke::Token>> tokens = lexer.tokenize();
+        const fluke::Result<std::vector<fluke::Token>> tokens = lexer.tokenize();
         if (!tokens.error().type().empty()) {
             tokens.error().display_error();
             return 1;
