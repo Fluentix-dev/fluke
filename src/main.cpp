@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
 
     std::string command = argv[1];
     if (command == "help") {
-        std::cout << "List of commands:\n[1] fluke --version: Shows the version of fluke that you are using\n[2] fluke help: Shows all the commands you can use\n[3] fluke clean Clears the terminal\n[4] fluke conv <file_name>: Transpiles the code to C++";
+        std::cout << "List of commands:\n[1] fluke --version: Shows the version of fluke that you are using\n[2] fluke help: Shows all the commands you can use\n[3] fluke clean: Clears the terminal\n[4] fluke conv <file_name>: Transpiles the code to C++";
         return 0;
     }
 
