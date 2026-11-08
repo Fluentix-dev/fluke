@@ -1,6 +1,5 @@
 # Build output
 /build/
-/files/
 
 # Executables
 *.exe
