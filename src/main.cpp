@@ -1,12 +1,76 @@
 #include "errors/results.hpp"
 #include "lexer/lexer.hpp"
 #include "lexer/tokens.hpp"
+#include "parser/parser.hpp"
+#include "parser/statements.hpp"
+#include "parser/expressions.hpp"
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
+#include <memory>
+
+void debug_expr(const std::shared_ptr<fluke::Expression> &expr) {
+    switch (expr->type()) {
+        case fluke::NodeType::BINARY_EXPRESSION: {
+            std::shared_ptr<fluke::BinaryExpression> binary_expression = std::static_pointer_cast<fluke::BinaryExpression>(expr);
+            std::cout << "(";
+            debug_expr(binary_expression->lhs());
+            std::cout << " " << binary_expression->op() << " ";
+            debug_expr(binary_expression->rhs());
+            std::cout << ")";
+            break;
+        } case fluke::NodeType::UNARY_EXPRESSION: {
+            std::shared_ptr<fluke::UnaryExpression> unary_expression = std::static_pointer_cast<fluke::UnaryExpression>(expr);
+            std::cout << "(" << unary_expression->op();
+            debug_expr(unary_expression->value());
+            std::cout << ")";
+            break;
+        } case fluke::NodeType::INT_EXPRESSION: {
+            std::shared_ptr<fluke::IntExpression> int_expression = std::static_pointer_cast<fluke::IntExpression>(expr);
+            std::cout << int_expression->value();
+            break;
+        } case fluke::NodeType::FLOAT_EXPRESSION: {
+            std::shared_ptr<fluke::FloatExpression> float_expression = std::static_pointer_cast<fluke::FloatExpression>(expr);
+            std::cout << float_expression->value();
+            break;
+        } case fluke::NodeType::IDENTIFIER_EXPRESSION: {
+            std::shared_ptr<fluke::IdentifierExpression> identifier_expression = std::static_pointer_cast<fluke::IdentifierExpression>(expr);
+            std::cout << identifier_expression->symbol();
+            break;
+        } case fluke::NodeType::GROUPING_EXPRESSION: {
+            std::shared_ptr<fluke::GroupExpression> group_expression = std::static_pointer_cast<fluke::GroupExpression>(expr);
+            debug_expr(group_expression->value());
+            break;
+        } default: {
+            std::cout << "fuck you it broke hahahahhaha\n";
+            break;
+        }
+    }
+}
+
+void debug_stmt(const std::shared_ptr<fluke::Statement> &stmt, const size_t indentation = 0) {
+    for (size_t i = 0; i < indentation; i++) {
+        std::cout << "    ";
+    }
+
+    switch (stmt->type()) {
+        case fluke::NodeType::BLOCK_STATEMENT: {
+            std::shared_ptr<fluke::BlockStatement> block_statement = std::static_pointer_cast<fluke::BlockStatement>(stmt);
+            std::cout << "(BLOCK STATEMENT, len=" << block_statement->body().size() << ") {\n";
+            for (const std::shared_ptr<fluke::Statement> &line : block_statement->body()) {
+                debug_stmt(line, indentation+1);
+                std::cout << "\n";
+            }
+
+            std::cout << "}";
+            break;
+        } default:
+            debug_expr(std::static_pointer_cast<fluke::Expression>(stmt));
+    }
+}
 
 int main(int argc, char* argv[]) {
     if (argc == 1) {
@@ -65,10 +129,15 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
-        for (fluke::Token &token : tokens.result()) {
-            std::cout << static_cast<int>(token.type()) << " " << token.value() << "\n";
+        fluke::Parser parser = fluke::Parser(tokens.result());
+        const fluke::Result<std::shared_ptr<fluke::BlockStatement>> ast = parser.generate_ast();
+        if (!ast.error().type().empty()) {
+            ast.error().display_error();
+            return 1;
         }
 
+        debug_stmt(ast.result(), 0ULL);
+        std::cout << "\nTranspiling '\033[1m" << file_name << "\033[0m' to C++ code is a \033[1m\033[32msuccess\033[0m because your code is better than \033[1m\033[32m99.999%\033[0m of Fluke coders in the \033[1mwhole world\033[0m!\n";
         return 0;
     }
 

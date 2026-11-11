@@ -1,7 +1,10 @@
 #include "results.hpp"
 #include "errors.hpp"
 #include "../lexer/tokens.hpp"
+#include "../parser/nodes.hpp"
+#include "../parser/statements.hpp"
 #include <vector>
+#include <memory>
 namespace fluke {
     template<typename T>
     Result<T>::Result(const T &result, const Error &error) : result_(result), error_(error) {}
@@ -17,4 +20,7 @@ namespace fluke {
     }
 
     template struct Result<std::vector<Token>>;
+    template struct Result<std::shared_ptr<Statement>>;
+    template struct Result<std::shared_ptr<Expression>>;
+    template struct Result<std::shared_ptr<BlockStatement>>;
 }

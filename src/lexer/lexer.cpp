@@ -41,6 +41,12 @@ namespace fluke {
                 case '\r':
                     this->advance();
                     break;
+                case '#':
+                    while (this->index < this->src.size() && this->src[this->index] != '\n') {
+                        this->advance();
+                    }
+
+                    break;
                 case '+': {
                     Position start = this->position;
                     this->advance();
@@ -129,6 +135,9 @@ namespace fluke {
             }
         }
 
+        Position start = this->position;
+        this->advance();
+        tokens.push_back(Token(start, this->position, TokenType::END_OF_FILE, "EOF"));
         return Result<std::vector<Token>>(tokens, Error(this->position, this->position, "", ""));
     }
 }

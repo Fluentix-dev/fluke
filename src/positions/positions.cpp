@@ -9,7 +9,7 @@ namespace fluke {
     std::string Position::file_name() const {
         return this->file_name_;
     }
-    
+
     size_t Position::line() const {
         return this->line_;
     }
