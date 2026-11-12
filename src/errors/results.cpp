@@ -3,6 +3,7 @@
 #include "../lexer/tokens.hpp"
 #include "../parser/nodes.hpp"
 #include "../parser/statements.hpp"
+#include "../parser/types.hpp"
 #include <vector>
 #include <memory>
 namespace fluke {
@@ -23,4 +24,5 @@ namespace fluke {
     template struct Result<std::shared_ptr<Statement>>;
     template struct Result<std::shared_ptr<Expression>>;
     template struct Result<std::shared_ptr<BlockStatement>>;
+    template struct Result<std::shared_ptr<Type>>;
 }

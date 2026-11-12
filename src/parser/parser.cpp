@@ -12,6 +12,18 @@ namespace fluke {
         this->index++;
     }
 
+    Result<std::shared_ptr<Statement>> Parser::check_semicolon(const std::shared_ptr<Statement> &stmt) const {
+        if (this->index >= this->tokens.size()) {
+            return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[0].start(), this->tokens[0].start(), "Syntax Error", "expected ';'"));
+        }
+
+        if (this->tokens[this->index].type() == TokenType::SEMICOLON) {
+            return Result<std::shared_ptr<Statement>>(stmt, Error(this->tokens[0].start(), this->tokens[0].end(), "", ""));
+        }
+
+        return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[this->index].start(), this->tokens[this->index].end(), "Syntax Error", "expected ';', got '" + this->tokens[this->index].value() + "'"));
+    }
+
     Result<std::shared_ptr<BlockStatement>> Parser::generate_ast() {
         std::vector<std::shared_ptr<Statement>> body = {};
         while (this->index < this->tokens.size() && this->tokens[this->index].type() != TokenType::END_OF_FILE) {
@@ -35,24 +47,48 @@ namespace fluke {
     }
 
     Result<std::shared_ptr<Statement>> Parser::statement() {
-        const Result<std::shared_ptr<Expression>> expr = this->expression();
-        if (!expr.error().type().empty()) {
-            return Result<std::shared_ptr<Statement>>(nullptr, expr.error());
-        }
+        switch (this->tokens[this->index].type()) {
+            case TokenType::LET: {
+                const Result<std::shared_ptr<Statement>> let_statement = this->let();
+                if (!let_statement.error().type().empty()) {
+                    return let_statement;
+                }
 
-        if (this->index < this->tokens.size() && this->tokens[this->index].type() == TokenType::SEMICOLON) {
-            return Result<std::shared_ptr<Statement>>(expr.result(), expr.error());
-        }
+                return this->check_semicolon(let_statement.result());
+            } default: {
+                const Result<std::shared_ptr<Expression>> expr = this->expression();
+                if (!expr.error().type().empty()) {
+                    return Result<std::shared_ptr<Statement>>(nullptr, expr.error());
+                }
 
-        if (this->index < this->tokens.size()) {
-            return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[this->index].start(), this->tokens[this->index].end(), "Syntax Error", "expected ';', got '" + this->tokens[this->index].value() + "'"));
+                return this->check_semicolon(expr.result());
+            }
         }
-
-        return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[0].start(), this->tokens[0].start(), "Syntax Error", "expected ';'"));
     }
 
     Result<std::shared_ptr<Expression>> Parser::expression() {
-        return this->additive();
+        return this->comparative();
+    }
+
+    Result<std::shared_ptr<Expression>> Parser::comparative() {
+        Result<std::shared_ptr<Expression>> lhs = this->additive();
+        if (!lhs.error().type().empty()) {
+            return lhs;
+        }
+
+        while (this->index < this->tokens.size() && (this->tokens[this->index].type() == TokenType::DOUBLE_EQUALS || this->tokens[this->index].type() == TokenType::NOT_EQUALS || this->tokens[this->index].type() == TokenType::GREATER_THAN || this->tokens[this->index].type() == TokenType::SMALLER_THAN || this->tokens[this->index].type() == TokenType::GREATER_THAN_OR_EQUALS || this->tokens[this->index].type() == TokenType::SMALLER_THAN_OR_EQUALS)) {
+            const std::string op = this->tokens[this->index].value();
+            this->advance();
+            
+            const Result<std::shared_ptr<Expression>> rhs = this->additive();
+            if (!rhs.error().type().empty()) {
+                return rhs;
+            }
+
+            lhs = Result<std::shared_ptr<Expression>>(std::make_shared<BinaryExpression>(lhs.result()->start(), rhs.result()->end(), lhs.result(), op, rhs.result()), lhs.error());
+        }
+
+        return lhs;
     }
 
     Result<std::shared_ptr<Expression>> Parser::additive() {
@@ -160,5 +196,106 @@ namespace fluke {
         }
         
         return Result<std::shared_ptr<Expression>>(nullptr, Error(this->tokens[0].start(), this->tokens[0].start(), "Syntax Error", "invalid syntax"));
+    }
+
+    Result<std::shared_ptr<Type>> Parser::type() {
+        return this->primary_type();
+    }
+
+    Result<std::shared_ptr<Type>> Parser::primary_type() {
+        if (this->index >= this->tokens.size()) {
+            return Result<std::shared_ptr<Type>>(nullptr, Error(this->tokens[0].start(), this->tokens[0].start(), "Syntax Error", "expected a type name"));
+        }
+
+        if (this->tokens[this->index].type() == TokenType::IDENTIFIER) {
+            Position start = this->tokens[this->index].start();
+            Position end = this->tokens[this->index].end();
+            std::string type_name = this->tokens[this->index].value();
+            this->advance();
+            return Result<std::shared_ptr<Type>>(std::make_shared<IdentifierType>(start, end, type_name), Error(this->tokens[0].start(), this->tokens[0].start(), "", ""));
+        }
+        
+        return Result<std::shared_ptr<Type>>(nullptr, Error(this->tokens[this->index].start(), this->tokens[this->index].end(), "Syntax Error", "expected a type name, got '" + this->tokens[this->index].value() + "'"));
+    }
+
+    Result<std::shared_ptr<Statement>> Parser::let() {
+        Position start = this->tokens[this->index].start();
+        this->advance();
+        if (this->index >= this->tokens.size()) {
+            return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[0].start(), this->tokens[0].end(), "Syntax Error", "expected a variable name"));
+        }
+
+        if (this->tokens[this->index].type() != TokenType::IDENTIFIER) {
+            return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[this->index].start(), this->tokens[this->index].end(), "Syntax Error", "expected a variable name, got '" + this->tokens[this->index].value() + "'"));
+        }
+
+        std::string var_name = this->tokens[this->index].value();
+        this->advance();
+        if (this->index >= this->tokens.size()) {
+            return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[0].start(), this->tokens[0].end(), "Syntax Error", "expected ':'"));
+        }
+
+        if (this->tokens[this->index].type() != TokenType::COLON) {
+            return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[this->index].start(), this->tokens[this->index].end(), "Syntax Error", "expected ':', got '" + this->tokens[this->index].value() + "'"));
+        }
+
+        this->advance();
+        Result<std::shared_ptr<Type>> type = this->type();
+        if (!type.error().type().empty()) {
+            return Result<std::shared_ptr<Statement>>(nullptr, type.error());
+        }
+
+        if (this->index >= this->tokens.size()) {
+            return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[0].start(), this->tokens[0].end(), "Syntax Error", "expected ';', '=', or a condition for the variable"));
+        }
+
+        switch (this->tokens[this->index].type()) {
+            case TokenType::SEMICOLON:
+                return Result<std::shared_ptr<Statement>>(std::make_shared<NormalVariableDeclaration>(start, type.result()->end(), var_name, type.result(), nullptr), type.error());
+            case TokenType::EQUALS: {
+                this->advance();
+                Result<std::shared_ptr<Expression>> value = this->expression();
+                if (!value.error().type().empty()) {
+                    return Result<std::shared_ptr<Statement>>(nullptr, value.error());
+                }
+
+                return Result<std::shared_ptr<Statement>>(std::make_shared<NormalVariableDeclaration>(start, value.result()->end(), var_name, type.result(), value.result()), type.error());
+            } case TokenType::LEFT_PAREN: {
+                this->advance();
+                Result<std::shared_ptr<Expression>> condition = this->expression();
+                if (!condition.error().type().empty()) {
+                    return Result<std::shared_ptr<Statement>>(nullptr, condition.error());
+                }
+
+                if (this->index >= this->tokens.size()) {
+                    return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[0].start(), this->tokens[0].end(), "Syntax Error", "expected ')'"));
+                }
+
+                if (this->tokens[this->index].type() != TokenType::RIGHT_PAREN) {
+                    return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[this->index].start(), this->tokens[this->index].end(), "Syntax Error", "expected ')', got '" + this->tokens[this->index].value() + "'"));
+                }
+
+                this->advance();
+                if (this->index >= this->tokens.size()) {
+                    return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[0].start(), this->tokens[0].end(), "Syntax Error", "expected ';' or '='"));
+                }
+
+                switch (this->tokens[this->index].type()) {
+                    case TokenType::SEMICOLON:
+                        return Result<std::shared_ptr<Statement>>(std::make_shared<VariableDeclarationWithExpressionCondition>(start, type.result()->end(), var_name, type.result(), condition.result(), nullptr), type.error());
+                    case TokenType::EQUALS: {
+                        this->advance();
+                        Result<std::shared_ptr<Expression>> value = this->expression();
+                        if (!value.error().type().empty()) {
+                            return Result<std::shared_ptr<Statement>>(nullptr, value.error());
+                        }
+
+                        return Result<std::shared_ptr<Statement>>(std::make_shared<VariableDeclarationWithExpressionCondition>(start, value.result()->end(), var_name, type.result(), condition.result(), value.result()), type.error());
+                    } default:
+                        return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[this->index].start(), this->tokens[this->index].end(), "Syntax Error", "expected ';' or '='"));
+                }
+            } default:
+                return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[this->index].start(), this->tokens[this->index].end(), "Syntax Error", "expected ';', '=', or a condition for the variable, got '" + this->tokens[this->index].value() + "'"));
+        }
     }
 }

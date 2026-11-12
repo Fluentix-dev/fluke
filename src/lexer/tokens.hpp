@@ -14,7 +14,15 @@ namespace fluke {
         RIGHT_PAREN,
         SEMICOLON,
         IDENTIFIER,
-        EQUALS
+        EQUALS,
+        COLON,
+        DOUBLE_EQUALS,
+        NOT_EQUALS,
+        GREATER_THAN,
+        GREATER_THAN_OR_EQUALS,
+        SMALLER_THAN,
+        SMALLER_THAN_OR_EQUALS,
+        LET
     };
 
     struct Token {

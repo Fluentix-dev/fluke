@@ -4,6 +4,7 @@
 #include "parser/parser.hpp"
 #include "parser/statements.hpp"
 #include "parser/expressions.hpp"
+#include "parser/types.hpp"
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -12,7 +13,23 @@
 #include <vector>
 #include <memory>
 
+void debug_type(const std::shared_ptr<fluke::Type> &type) {
+    switch (type->type()) {
+        case fluke::TypeType::IDENTIFIER: {
+            std::shared_ptr<fluke::IdentifierType> identifier_type = std::static_pointer_cast<fluke::IdentifierType>(type);
+            std::cout << identifier_type->type_name();
+            break;
+        } default:
+            std::cout << "fuck you it broke again hahahahaha\n";
+    }
+}
+
 void debug_expr(const std::shared_ptr<fluke::Expression> &expr) {
+    if (expr == nullptr) {
+        std::cout << "NULLPTR";
+        return;
+    }
+
     switch (expr->type()) {
         case fluke::NodeType::BINARY_EXPRESSION: {
             std::shared_ptr<fluke::BinaryExpression> binary_expression = std::static_pointer_cast<fluke::BinaryExpression>(expr);
@@ -44,10 +61,9 @@ void debug_expr(const std::shared_ptr<fluke::Expression> &expr) {
             std::shared_ptr<fluke::GroupExpression> group_expression = std::static_pointer_cast<fluke::GroupExpression>(expr);
             debug_expr(group_expression->value());
             break;
-        } default: {
+        } default:
             std::cout << "fuck you it broke hahahahhaha\n";
             break;
-        }
     }
 }
 
@@ -66,6 +82,22 @@ void debug_stmt(const std::shared_ptr<fluke::Statement> &stmt, const size_t inde
             }
 
             std::cout << "}";
+            break;
+        } case fluke::NodeType::NORMAL_VARIABLE_DECLARATION_STATEMENT: {
+            std::shared_ptr<fluke::NormalVariableDeclaration> normal_variable_declaration = std::static_pointer_cast<fluke::NormalVariableDeclaration>(stmt);
+            std::cout << "LET " << normal_variable_declaration->var_name() << ": ";
+            debug_type(normal_variable_declaration->var_type());
+            std::cout << " = ";
+            debug_expr(normal_variable_declaration->value());
+            break;
+        } case fluke::NodeType::VARIABLE_DECLARATION_WITH_EXPRESSION_CONDITION_STATEMENT: {
+            std::shared_ptr<fluke::VariableDeclarationWithExpressionCondition> variable_declaration_with_expression_condition = std::static_pointer_cast<fluke::VariableDeclarationWithExpressionCondition>(stmt);
+            std::cout << "LET " << variable_declaration_with_expression_condition->var_name() << ": ";
+            debug_type(variable_declaration_with_expression_condition->var_type());
+            std::cout << "(";
+            debug_expr(variable_declaration_with_expression_condition->condition());
+            std::cout << ") = ";
+            debug_expr(variable_declaration_with_expression_condition->value());
             break;
         } default:
             debug_expr(std::static_pointer_cast<fluke::Expression>(stmt));
