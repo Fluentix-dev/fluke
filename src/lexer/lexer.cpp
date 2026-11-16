@@ -107,18 +107,16 @@ namespace fluke {
                     Position start = this->position;
                     this->advance();
                     if (this->index >= this->src.size()) {
-                        start = this->position;
-                        this->advance();
-                        return Result<std::vector<Token>>(tokens, Error(start, this->position, "Syntax Error", "expected '='"));
+                        tokens.push_back(Token(start, this->position, TokenType::NOT, "!"));
+                        continue;
                     }
 
                     if (this->src[this->index] == '=') {
                         this->advance();
                         tokens.push_back(Token(start, this->position, TokenType::NOT_EQUALS, "!="));
                     } else {
-                        start = this->position;
-                        this->advance();
-                        return Result<std::vector<Token>>(tokens, Error(start, this->position, "Syntax Error", "expected '=', got '" + this->src[this->index]));
+                        tokens.push_back(Token(start, this->position, TokenType::NOT, "!"));
+                        continue;
                     }
 
                     break;
@@ -158,6 +156,44 @@ namespace fluke {
                     const Position start = this->position;
                     this->advance();
                     tokens.push_back(Token(start, this->position, TokenType::COLON, ":"));
+                    break;
+                } case '&': {
+                    Position start = this->position;
+                    this->advance();
+                    if (this->index >= this->src.size()) {
+                        start = this->position;
+                        this->advance();
+                        return Result<std::vector<Token>>(tokens, Error(start, this->position, "Syntax Error", "expected '&', got '" + this->src[this->index]));
+                    }
+
+                    if (this->src[this->index] == '&') {
+                        this->advance();
+                        tokens.push_back(Token(start, this->position, TokenType::AND, "&&"));
+                    } else {
+                        start = this->position;
+                        this->advance();
+                        return Result<std::vector<Token>>(tokens, Error(start, this->position, "Syntax Error", "expected '&', got '" + this->src[this->index]));
+                    }
+
+                    break;
+                } case '|': {
+                    Position start = this->position;
+                    this->advance();
+                    if (this->index >= this->src.size()) {
+                        start = this->position;
+                        this->advance();
+                        return Result<std::vector<Token>>(tokens, Error(start, this->position, "Syntax Error", "expected '|', got '" + this->src[this->index]));
+                    }
+
+                    if (this->src[this->index] == '|') {
+                        this->advance();
+                        tokens.push_back(Token(start, this->position, TokenType::OR, "&&"));
+                    } else {
+                        start = this->position;
+                        this->advance();
+                        return Result<std::vector<Token>>(tokens, Error(start, this->position, "Syntax Error", "expected '|', got '" + this->src[this->index]));
+                    }
+
                     break;
                 } default:
                     if (this->src[this->index] == '.' || ('0' <= this->src[this->index] && this->src[this->index] <= '9')) {

@@ -67,7 +67,49 @@ namespace fluke {
     }
 
     Result<std::shared_ptr<Expression>> Parser::expression() {
-        return this->comparative();
+        return this->or_();
+    }
+
+    Result<std::shared_ptr<Expression>> Parser::or_() {
+        Result<std::shared_ptr<Expression>> lhs = this->and_();
+        if (!lhs.error().type().empty()) {
+            return lhs;
+        }
+
+        while (this->index < this->tokens.size() && this->tokens[this->index].type() == TokenType::OR) {
+            const std::string op = this->tokens[this->index].value();
+            this->advance();
+            
+            const Result<std::shared_ptr<Expression>> rhs = this->and_();
+            if (!rhs.error().type().empty()) {
+                return rhs;
+            }
+
+            lhs = Result<std::shared_ptr<Expression>>(std::make_shared<BinaryExpression>(lhs.result()->start(), rhs.result()->end(), lhs.result(), op, rhs.result()), lhs.error());
+        }
+
+        return lhs;
+    }
+
+    Result<std::shared_ptr<Expression>> Parser::and_() {
+        Result<std::shared_ptr<Expression>> lhs = this->comparative();
+        if (!lhs.error().type().empty()) {
+            return lhs;
+        }
+
+        while (this->index < this->tokens.size() && this->tokens[this->index].type() == TokenType::AND) {
+            const std::string op = this->tokens[this->index].value();
+            this->advance();
+            
+            const Result<std::shared_ptr<Expression>> rhs = this->comparative();
+            if (!rhs.error().type().empty()) {
+                return rhs;
+            }
+
+            lhs = Result<std::shared_ptr<Expression>>(std::make_shared<BinaryExpression>(lhs.result()->start(), rhs.result()->end(), lhs.result(), op, rhs.result()), lhs.error());
+        }
+
+        return lhs;
     }
 
     Result<std::shared_ptr<Expression>> Parser::comparative() {
@@ -134,7 +176,7 @@ namespace fluke {
     }
 
     Result<std::shared_ptr<Expression>> Parser::unary() {
-        if (this->index < this->tokens.size() && (this->tokens[this->index].type() == TokenType::PLUS || this->tokens[this->index].type() == TokenType::MINUS)) {
+        if (this->index < this->tokens.size() && (this->tokens[this->index].type() == TokenType::PLUS || this->tokens[this->index].type() == TokenType::MINUS || this->tokens[this->index].type() == TokenType::NOT)) {
             const Position start = this->tokens[this->index].start();
             const std::string op = this->tokens[this->index].value();
             this->advance();

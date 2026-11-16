@@ -22,6 +22,9 @@ namespace fluke {
         GREATER_THAN_OR_EQUALS,
         SMALLER_THAN,
         SMALLER_THAN_OR_EQUALS,
+        AND,
+        OR,
+        NOT,
         LET
     };
 
