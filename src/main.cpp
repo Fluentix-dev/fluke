@@ -67,6 +67,10 @@ void debug_expr(const std::shared_ptr<fluke::Expression> &expr) {
             std::shared_ptr<fluke::IdentifierExpression> identifier_expression = std::static_pointer_cast<fluke::IdentifierExpression>(expr);
             std::cout << identifier_expression->symbol();
             break;
+        } case fluke::NodeType::BOOLEAN_EXPRESSION: {
+            std::shared_ptr<fluke::BooleanExpression> boolean_expression = std::static_pointer_cast<fluke::BooleanExpression>(expr);
+            std::cout << (boolean_expression->value() ? "true" : "false");
+            break;
         } case fluke::NodeType::GROUPING_EXPRESSION: {
             std::shared_ptr<fluke::GroupExpression> group_expression = std::static_pointer_cast<fluke::GroupExpression>(expr);
             debug_expr(group_expression->value());

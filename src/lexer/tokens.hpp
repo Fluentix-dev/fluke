@@ -25,7 +25,9 @@ namespace fluke {
         AND,
         OR,
         NOT,
-        LET
+        LET,
+        TRUE,
+        FALSE
     };
 
     struct Token {

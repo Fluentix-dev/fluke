@@ -11,6 +11,7 @@ namespace fluke {
         INT_EXPRESSION,
         FLOAT_EXPRESSION,
         IDENTIFIER_EXPRESSION,
+        BOOLEAN_EXPRESSION,
         GROUPING_EXPRESSION
     };
     

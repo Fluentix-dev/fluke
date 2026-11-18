@@ -1,2 +1,5 @@
-let a: int = 5;
+let a: float = 5.0;
 a = 4.0;
+
+let b: bool = true;
+b = !b && b - a;

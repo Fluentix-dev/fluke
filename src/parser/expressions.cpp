@@ -50,6 +50,11 @@ namespace fluke {
         return this->symbol_;
     }
 
+    BooleanExpression::BooleanExpression(const Position &start, const Position &end, const bool value) : Expression(start, end, NodeType::BOOLEAN_EXPRESSION), value_(value) {}
+    bool BooleanExpression::value() const {
+        return this->value_;
+    }
+
     GroupExpression::GroupExpression(const Position &start, const Position &end, const std::shared_ptr<Expression> &value) : Expression(start, end, NodeType::GROUPING_EXPRESSION), value_(value) {}
     std::shared_ptr<Expression> GroupExpression::value() const {
         return this->value_;

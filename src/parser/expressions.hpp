@@ -60,6 +60,14 @@ namespace fluke {
         std::string symbol_;
     };
 
+    struct BooleanExpression : public Expression {
+    public:
+        BooleanExpression(const Position &start, const Position &end, const bool value);
+        bool value() const;
+    private:
+        bool value_;
+    };
+
     struct GroupExpression : public Expression {
     public:
         GroupExpression(const Position &start, const Position &end, const std::shared_ptr<Expression> &value);

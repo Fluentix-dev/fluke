@@ -140,6 +140,8 @@ namespace fluke {
                 return Result<std::string>("float", Error(expr->start(), expr->start(), "", ""));
             case NodeType::IDENTIFIER_EXPRESSION: {
                 return scope.get_value(std::static_pointer_cast<IdentifierExpression>(expr));
+            } case NodeType::BOOLEAN_EXPRESSION: {
+                return Result<std::string>("bool", Error(expr->start(), expr->start(), "", ""));
             } default:
                 return Result<std::string>("", Error(expr->start(), expr->end(), "Typechecker Error", "some invalid expression bs: '" + std::to_string(static_cast<int>(expr->type())) + "'"));
         }
@@ -225,6 +227,10 @@ namespace fluke {
         std::shared_ptr<IdentifierExpression> identifier_expression = std::static_pointer_cast<IdentifierExpression>(expr->assigner());
         if (this->type_map.count(identifier_expression->symbol())) {
             Result<std::string> value_type = expression_typechecker.get_type(expr->assignee(), *this);
+            if (!value_type.error().type().empty()) {
+                return value_type;
+            }
+            
             if (!expression_typechecker.same_type(value_type.result(), this->type_map.at(identifier_expression->symbol()))) {
                 return Result<std::string>("", Error(expr->assignee()->start(), expr->assignee()->end(), "Type Error", "mismatched type, expected '" + this->type_map.at(identifier_expression->symbol()) + "', got '" + value_type.result() + "'"));
             }

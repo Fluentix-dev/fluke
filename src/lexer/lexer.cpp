@@ -28,7 +28,9 @@ namespace fluke {
 
     Result<std::vector<Token>> Lexer::tokenize() {
         const std::unordered_map<std::string, TokenType> KEYWORDS = {
-            {"let", TokenType::LET}
+            {"let", TokenType::LET},
+            {"true", TokenType::TRUE},
+            {"false", TokenType::FALSE}
         };
 
         std::vector<Token> tokens = {};

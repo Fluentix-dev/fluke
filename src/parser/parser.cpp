@@ -240,6 +240,16 @@ namespace fluke {
                     const std::string symbol = this->tokens[this->index].value();
                     this->advance();
                     return Result<std::shared_ptr<Expression>>(std::make_shared<IdentifierExpression>(start, end, symbol), Error(this->tokens[0].start(), this->tokens[0].start(), "", ""));
+                } case TokenType::TRUE: {
+                    const Position start = this->tokens[this->index].start();   
+                    const Position end = this->tokens[this->index].end();
+                    this->advance();
+                    return Result<std::shared_ptr<Expression>>(std::make_shared<BooleanExpression>(start, end, true), Error(this->tokens[0].start(), this->tokens[0].start(), "", ""));
+                } case TokenType::FALSE: {
+                    const Position start = this->tokens[this->index].start();   
+                    const Position end = this->tokens[this->index].end();
+                    this->advance();
+                    return Result<std::shared_ptr<Expression>>(std::make_shared<BooleanExpression>(start, end, false), Error(this->tokens[0].start(), this->tokens[0].start(), "", ""));
                 } case TokenType::LEFT_PAREN: {
                     const Position start = this->tokens[this->index].start();
                     this->advance();
