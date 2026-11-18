@@ -17,6 +17,7 @@ namespace fluke {
         Result<std::shared_ptr<Statement>> check_semicolon(const std::shared_ptr<Statement> &stmt) const;
         Result<std::shared_ptr<Statement>> statement();
         Result<std::shared_ptr<Expression>> expression();
+        Result<std::shared_ptr<Expression>> assignment();
         Result<std::shared_ptr<Expression>> or_();
         Result<std::shared_ptr<Expression>> and_();
         Result<std::shared_ptr<Expression>> comparative();

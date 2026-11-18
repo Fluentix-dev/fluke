@@ -67,7 +67,34 @@ namespace fluke {
     }
 
     Result<std::shared_ptr<Expression>> Parser::expression() {
-        return this->or_();
+        return this->assignment();
+    }
+
+    Result<std::shared_ptr<Expression>> Parser::assignment() {
+        const Result<std::shared_ptr<Expression>> lhs = this->or_();
+        if (!lhs.error().type().empty()) {
+            return lhs;
+        }
+
+        if (this->index >= this->tokens.size()) {
+            return lhs;
+        }
+
+        if (this->tokens[this->index].type() != TokenType::EQUALS) {
+            return lhs;
+        }
+
+        this->advance();
+        const Result<std::shared_ptr<Expression>> rhs = this->expression();
+        if (!rhs.error().type().empty()) {
+            return rhs;
+        }
+
+        if (lhs.result()->type() != NodeType::IDENTIFIER_EXPRESSION) {
+            return Result<std::shared_ptr<Expression>>(nullptr, Error(lhs.result()->start(), lhs.result()->end(), "Syntax Error", "expected a variable name"));
+        }
+
+        return Result<std::shared_ptr<Expression>>(std::make_shared<AssignmentExpression>(lhs.result()->start(), rhs.result()->end(), lhs.result(), rhs.result()), lhs.error());
     }
 
     Result<std::shared_ptr<Expression>> Parser::or_() {

@@ -5,6 +5,8 @@
 #include "parser/statements.hpp"
 #include "parser/expressions.hpp"
 #include "parser/types.hpp"
+#include "typechecker/typechecker.hpp"
+#include "errors/errors.hpp"
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -31,7 +33,15 @@ void debug_expr(const std::shared_ptr<fluke::Expression> &expr) {
     }
 
     switch (expr->type()) {
-        case fluke::NodeType::BINARY_EXPRESSION: {
+        case fluke::NodeType::ASSIGNMENT_EXPRESSION: {
+            std::shared_ptr<fluke::AssignmentExpression> assignment_expression = std::static_pointer_cast<fluke::AssignmentExpression>(expr);
+            std::cout << "(";
+            debug_expr(assignment_expression->assigner());
+            std::cout << " = ";
+            debug_expr(assignment_expression->assignee());
+            std::cout << ")";
+            break;
+        } case fluke::NodeType::BINARY_EXPRESSION: {
             std::shared_ptr<fluke::BinaryExpression> binary_expression = std::static_pointer_cast<fluke::BinaryExpression>(expr);
             std::cout << "(";
             debug_expr(binary_expression->lhs());
@@ -168,8 +178,15 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
-        debug_stmt(ast.result(), 0ULL);
-        std::cout << "\nTranspiling '\033[1m" << file_name << "\033[0m' to C++ code is a \033[1m\033[32msuccess\033[0m because your code is better than \033[1m\033[32m99.999%\033[0m of Fluke coders in the \033[1mwhole world\033[0m!\n";
+        // debug_stmt(ast.result(), 0ULL);
+        fluke::Typechecker typechecker = fluke::Typechecker(ast.result());
+        const fluke::Error typechecker_error = typechecker.typecheck();
+        if (!typechecker_error.type().empty()) {
+            typechecker_error.display_error();
+            return 1;
+        }
+        
+        std::cout << "Transpiling '\033[1m" << file_name << "\033[0m' to C++ code is a \033[1m\033[32msuccess\033[0m because your code is better than \033[1m\033[32m99.999%\033[0m of Fluke coders in the \033[1mwhole world\033[0m!\n";
         return 0;
     }
 

@@ -15,8 +15,16 @@ namespace fluke {
         return this->type_;
     }
 
+    std::string Type::string_representation() const {
+        return "";
+    }
+
     IdentifierType::IdentifierType(const Position &start, const Position &end, const std::string &type_name) : Type(start, end, TypeType::IDENTIFIER), type_name_(type_name) {}
     std::string IdentifierType::type_name() const {
+        return this->type_name_;
+    }
+
+    std::string IdentifierType::string_representation() const {
         return this->type_name_;
     }
 }

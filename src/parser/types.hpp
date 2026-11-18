@@ -13,6 +13,7 @@ namespace fluke {
         Position start() const;
         Position end() const;
         TypeType type() const;
+        virtual std::string string_representation() const;
     private:
         Position start_;
         Position end_;
@@ -23,6 +24,7 @@ namespace fluke {
     public:
         IdentifierType(const Position &start, const Position &end, const std::string &type_name);
         std::string type_name() const;
+        std::string string_representation() const override;
     private:
         std::string type_name_;
     };

@@ -104,7 +104,7 @@ namespace fluke {
 
                     break;
                 } case '!': {
-                    Position start = this->position;
+                    const Position start = this->position;
                     this->advance();
                     if (this->index >= this->src.size()) {
                         tokens.push_back(Token(start, this->position, TokenType::NOT, "!"));

@@ -4,6 +4,16 @@
 #include <memory>
 #include <string>
 namespace fluke {
+    struct AssignmentExpression : public Expression {
+    public:
+        AssignmentExpression(const Position &start, const Position &end, const std::shared_ptr<Expression> &assigner, const std::shared_ptr<Expression> &assignee);
+        std::shared_ptr<Expression> assigner() const;
+        std::shared_ptr<Expression> assignee() const;
+    private:
+        std::shared_ptr<Expression> assigner_;
+        std::shared_ptr<Expression> assignee_;
+    };
+
     struct BinaryExpression : public Expression {
     public:
         BinaryExpression(const Position &start, const Position &end, const std::shared_ptr<Expression> &lhs, const std::string &op, const std::shared_ptr<Expression> &rhs);

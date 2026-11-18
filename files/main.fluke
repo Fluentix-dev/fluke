@@ -1,7 +1,5 @@
-# let <var_name>: <type> = <expr>;
-# let <var_name>: <type> (<expr>) = <expr>;
-# let <var_name>: <type> {<code>} = <expr>; # we'll worry about it later
+let player_num: int(player_num >= 2) = 2;
+let abc: int = 5;
 
-let player_num: int(player_num >= 2 && player_num <= 4) = 3;
-let february: int(!(february >= 28) && february <= 31 || february == 32) = 29;
-let march: int((march <= 2 || march >= 6) && march != 0) = 1;
+player_num = 4;
+abc = 1.0;
