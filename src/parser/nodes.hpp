@@ -17,6 +17,7 @@ namespace fluke {
     struct Statement {
     public:
         Statement(const Position &start, const Position &end, const NodeType type);
+        virtual ~Statement() = default;
         Position start() const;
         Position end() const;
         NodeType type() const;

@@ -272,16 +272,14 @@ namespace fluke {
                 return this->scope.declare(stmt, expression_typechecker);
             case NodeType::VARIABLE_DECLARATION_WITH_EXPRESSION_CONDITION_STATEMENT:
                 return this->scope.declare(stmt, expression_typechecker);
-            case NodeType::ASSIGNMENT_EXPRESSION: {
-                std::shared_ptr<AssignmentExpression> assignment_expression = std::static_pointer_cast<AssignmentExpression>(stmt);
-                switch (assignment_expression->assigner()->type()) {
-                    case NodeType::IDENTIFIER_EXPRESSION:
-                        return this->scope.assign(assignment_expression, expression_typechecker).error();
-                    default:
-                        return Error(stmt->start(), stmt->end(), "Typechecker Error", "i hate when it breaks '" + std::to_string(static_cast<int>(assignment_expression->assigner()->type())) + "'");
+            default: {
+                std::shared_ptr<Expression> expr = std::dynamic_pointer_cast<Expression>(stmt);
+                if (expr) {
+                    return expression_typechecker.get_type(expr, scope).error();
+                } else {
+                    return Error(stmt->start(), stmt->end(), "Typechecker Error", "it broke: '" + std::to_string(static_cast<int>(stmt->type())) + "'");
                 }
-            } default:
-                return Error(stmt->start(), stmt->end(), "Typechecker Error", "it broke: '" + std::to_string(static_cast<int>(stmt->type())) + "'");
+            }
         }
     }
 }
