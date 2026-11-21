@@ -2,6 +2,7 @@
 #include "../parser/statements.hpp"
 #include "../parser/nodes.hpp"
 #include "../errors/errors.hpp"
+#include "../parser/expressions.hpp"
 #include "../errors/results.hpp"
 #include "../parser/types.hpp"
 #include <memory>
@@ -118,7 +119,7 @@ namespace fluke {
             }
 
             for (size_t j = 0; j < 2; j++) {
-                std::string op = (j == 0 ? "+" : "-");
+                const std::string op = (j == 0 ? "+" : "-");
                 this->operation_map["<unary>"][op][type] = (type == "float" ? "float" : "int");
             }
         }
@@ -129,7 +130,7 @@ namespace fluke {
             case NodeType::GROUPING_EXPRESSION:
                 return this->get_type(std::static_pointer_cast<GroupExpression>(expr)->value(), scope);
             case NodeType::ASSIGNMENT_EXPRESSION: {
-                std::shared_ptr<AssignmentExpression> assignment_expression = std::static_pointer_cast<AssignmentExpression>(expr);
+                const std::shared_ptr<AssignmentExpression> assignment_expression = std::static_pointer_cast<AssignmentExpression>(expr);
                 switch (assignment_expression->assigner()->type()) {
                     case NodeType::IDENTIFIER_EXPRESSION:
                         return scope.assign(assignment_expression, *this);
@@ -137,13 +138,13 @@ namespace fluke {
                         return Result<std::string>("", Error(assignment_expression->start(), assignment_expression->end(), "Typechecker Error", "i hate when it breaks '" + std::to_string(static_cast<int>(assignment_expression->assigner()->type())) + "'"));
                 }
             } case NodeType::BINARY_EXPRESSION: {
-                std::shared_ptr<BinaryExpression> binary_expression = std::static_pointer_cast<BinaryExpression>(expr);
-                Result<std::string> lhs = this->get_type(binary_expression->lhs(), scope);
+                const std::shared_ptr<BinaryExpression> binary_expression = std::static_pointer_cast<BinaryExpression>(expr);
+                const Result<std::string> lhs = this->get_type(binary_expression->lhs(), scope);
                 if (!lhs.error().type().empty()) {
                     return lhs;
                 }
 
-                Result<std::string> rhs = this->get_type(binary_expression->rhs(), scope);
+                const Result<std::string> rhs = this->get_type(binary_expression->rhs(), scope);
                 if (!rhs.error().type().empty()) {
                     return rhs;
                 }
@@ -162,8 +163,8 @@ namespace fluke {
 
                 return Result<std::string>(this->operation_map.at(lhs.result()).at(binary_expression->op()).at(rhs.result()), lhs.error());
             } case NodeType::UNARY_EXPRESSION: {
-                std::shared_ptr<UnaryExpression> unary_expression = std::static_pointer_cast<UnaryExpression>(expr);
-                Result<std::string> value = this->get_type(unary_expression->value(), scope);
+                const std::shared_ptr<UnaryExpression> unary_expression = std::static_pointer_cast<UnaryExpression>(expr);
+                const Result<std::string> value = this->get_type(unary_expression->value(), scope);
                 if (!value.error().type().empty()) {
                     return value;
                 }
@@ -197,7 +198,7 @@ namespace fluke {
     bool ExpressionTypechecker::same_type(const std::string &type, const std::shared_ptr<Type> &expected) const {
         switch (expected->type()) {
             case TypeType::IDENTIFIER: {
-                std::shared_ptr<IdentifierType> identifier_type = std::static_pointer_cast<IdentifierType>(expected);
+                const std::shared_ptr<IdentifierType> identifier_type = std::static_pointer_cast<IdentifierType>(expected);
                 return type == identifier_type->type_name();
             } default:
                 return false; // it fucking broke again
@@ -212,7 +213,7 @@ namespace fluke {
     Error TypecheckerScope::declare(const std::shared_ptr<Statement> &stmt, const ExpressionTypechecker &expression_typechecker) {
         switch (stmt->type()) {
             case NodeType::NORMAL_VARIABLE_DECLARATION_STATEMENT: {
-                std::shared_ptr<NormalVariableDeclaration> normal_variable_declaration = std::static_pointer_cast<NormalVariableDeclaration>(stmt);
+                const std::shared_ptr<NormalVariableDeclaration> normal_variable_declaration = std::static_pointer_cast<NormalVariableDeclaration>(stmt);
                 if (this->type_map.count(normal_variable_declaration->var_name())) {
                     return Error(stmt->start(), stmt->end(), "Variable Error", "cannot declare variable '" + normal_variable_declaration->var_name() + "' as it already exists");
                 }
@@ -222,7 +223,7 @@ namespace fluke {
                     return Error(stmt->start(), stmt->end(), "", "");
                 }
 
-                Result<std::string> value_type = expression_typechecker.get_type(normal_variable_declaration->value(), *this);
+                const Result<std::string> value_type = expression_typechecker.get_type(normal_variable_declaration->value(), *this);
                 if (!value_type.error().type().empty()) {
                     return value_type.error();
                 }
@@ -234,13 +235,13 @@ namespace fluke {
                 this->type_map[normal_variable_declaration->var_name()] = normal_variable_declaration->var_type()->string_representation();
                 return value_type.error();
             } case NodeType::VARIABLE_DECLARATION_WITH_EXPRESSION_CONDITION_STATEMENT: {
-                std::shared_ptr<VariableDeclarationWithExpressionCondition> variable_declaration_with_expression_condition = std::static_pointer_cast<VariableDeclarationWithExpressionCondition>(stmt);
+                const std::shared_ptr<VariableDeclarationWithExpressionCondition> variable_declaration_with_expression_condition = std::static_pointer_cast<VariableDeclarationWithExpressionCondition>(stmt);
                 if (this->type_map.count(variable_declaration_with_expression_condition->var_name())) {
                     return Error(stmt->start(), stmt->end(), "Variable Error", "cannot declare variable '" + variable_declaration_with_expression_condition->var_name() + "' as it already exists");
                 }
 
                 this->type_map[variable_declaration_with_expression_condition->var_name()] = variable_declaration_with_expression_condition->var_type()->string_representation();
-                Result<std::string> condition_type = expression_typechecker.get_type(variable_declaration_with_expression_condition->condition(), *this);
+                const Result<std::string> condition_type = expression_typechecker.get_type(variable_declaration_with_expression_condition->condition(), *this);
                 if (!condition_type.error().type().empty()) {
                     return condition_type.error();
                 }
@@ -254,7 +255,7 @@ namespace fluke {
                 }
 
                 this->type_map.erase(variable_declaration_with_expression_condition->var_name());
-                Result<std::string> value_type = expression_typechecker.get_type(variable_declaration_with_expression_condition->value(), *this);
+                const Result<std::string> value_type = expression_typechecker.get_type(variable_declaration_with_expression_condition->value(), *this);
                 if (!value_type.error().type().empty()) {
                     return value_type.error();
                 }
@@ -271,9 +272,9 @@ namespace fluke {
     }
 
     Result<std::string> TypecheckerScope::assign(const std::shared_ptr<AssignmentExpression> &expr, const ExpressionTypechecker &expression_typechecker) {
-        std::shared_ptr<IdentifierExpression> identifier_expression = std::static_pointer_cast<IdentifierExpression>(expr->assigner());
+        const std::shared_ptr<IdentifierExpression> identifier_expression = std::static_pointer_cast<IdentifierExpression>(expr->assigner());
         if (this->type_map.count(identifier_expression->symbol())) {
-            Result<std::string> value_type = expression_typechecker.get_type(expr->assignee(), *this);
+            const Result<std::string> value_type = expression_typechecker.get_type(expr->assignee(), *this);
             if (!value_type.error().type().empty()) {
                 return value_type;
             }
@@ -313,10 +314,10 @@ namespace fluke {
     Error Typechecker::typecheck_(const std::shared_ptr<Statement> &stmt, std::shared_ptr<TypecheckerScope> &scope, const ExpressionTypechecker &expression_typechecker) {
         switch (stmt->type()) {
             case NodeType::BLOCK_STATEMENT: {
-                std::shared_ptr<BlockStatement> block = std::static_pointer_cast<BlockStatement>(stmt);
+                const std::shared_ptr<BlockStatement> block = std::static_pointer_cast<BlockStatement>(stmt);
                 std::shared_ptr<TypecheckerScope> child_scope = std::make_shared<TypecheckerScope>(scope);
                 for (const std::shared_ptr<Statement> &line : block->body()) {
-                    Error error = this->typecheck_(line, child_scope, expression_typechecker);
+                    const Error error = this->typecheck_(line, child_scope, expression_typechecker);
                     if (!error.type().empty()) {
                         return error;
                     }
@@ -328,8 +329,8 @@ namespace fluke {
             case NodeType::VARIABLE_DECLARATION_WITH_EXPRESSION_CONDITION_STATEMENT:
                 return scope->declare(stmt, expression_typechecker);
             case NodeType::IF_ELSE_STATEMENT: {
-                std::shared_ptr<IfElseStatement> if_else = std::static_pointer_cast<IfElseStatement>(stmt);
-                Result<std::string> condition_type = expression_typechecker.get_type(if_else->condition(), *scope);
+                const std::shared_ptr<IfElseStatement> if_else = std::static_pointer_cast<IfElseStatement>(stmt);
+                const Result<std::string> condition_type = expression_typechecker.get_type(if_else->condition(), *scope);
                 if (!condition_type.error().type().empty()) {
                     return condition_type.error();
                 }
@@ -338,7 +339,7 @@ namespace fluke {
                     return Error(if_else->condition()->start(), if_else->condition()->end(), "Type Error", "expected a 'bool' for the condition, got '" + condition_type.result() + "'");
                 }
 
-                Error if_body = this->typecheck_(if_else->body(), scope, expression_typechecker);
+                const Error if_body = this->typecheck_(if_else->body(), scope, expression_typechecker);
                 if (!if_body.type().empty()) {
                     return if_body;
                 }
@@ -349,8 +350,8 @@ namespace fluke {
 
                 return this->typecheck_(if_else->else_body(), scope, expression_typechecker);
             } case NodeType::WHILE_STATEMENT: {
-                std::shared_ptr<WhileStatement> while_loop = std::static_pointer_cast<WhileStatement>(stmt);
-                Result<std::string> condition_type = expression_typechecker.get_type(while_loop->condition(), *scope);
+                const std::shared_ptr<WhileStatement> while_loop = std::static_pointer_cast<WhileStatement>(stmt);
+                const Result<std::string> condition_type = expression_typechecker.get_type(while_loop->condition(), *scope);
                 if (!condition_type.error().type().empty()) {
                     return condition_type.error();
                 }
@@ -361,7 +362,7 @@ namespace fluke {
 
                 return this->typecheck_(while_loop->body(), scope, expression_typechecker);
             } default: {
-                std::shared_ptr<Expression> expr = std::dynamic_pointer_cast<Expression>(stmt);
+                const std::shared_ptr<Expression> expr = std::dynamic_pointer_cast<Expression>(stmt);
                 if (expr) {
                     return expression_typechecker.get_type(expr, *scope).error();
                 } else {

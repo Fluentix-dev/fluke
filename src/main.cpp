@@ -18,7 +18,7 @@
 void debug_type(const std::shared_ptr<fluke::Type> &type) {
     switch (type->type()) {
         case fluke::TypeType::IDENTIFIER: {
-            std::shared_ptr<fluke::IdentifierType> identifier_type = std::static_pointer_cast<fluke::IdentifierType>(type);
+            const std::shared_ptr<fluke::IdentifierType> identifier_type = std::static_pointer_cast<fluke::IdentifierType>(type);
             std::cout << identifier_type->type_name();
             break;
         } default:
@@ -34,7 +34,7 @@ void debug_expr(const std::shared_ptr<fluke::Expression> &expr) {
 
     switch (expr->type()) {
         case fluke::NodeType::ASSIGNMENT_EXPRESSION: {
-            std::shared_ptr<fluke::AssignmentExpression> assignment_expression = std::static_pointer_cast<fluke::AssignmentExpression>(expr);
+            const std::shared_ptr<fluke::AssignmentExpression> assignment_expression = std::static_pointer_cast<fluke::AssignmentExpression>(expr);
             std::cout << "(";
             debug_expr(assignment_expression->assigner());
             std::cout << " = ";
@@ -42,7 +42,7 @@ void debug_expr(const std::shared_ptr<fluke::Expression> &expr) {
             std::cout << ")";
             break;
         } case fluke::NodeType::BINARY_EXPRESSION: {
-            std::shared_ptr<fluke::BinaryExpression> binary_expression = std::static_pointer_cast<fluke::BinaryExpression>(expr);
+            const std::shared_ptr<fluke::BinaryExpression> binary_expression = std::static_pointer_cast<fluke::BinaryExpression>(expr);
             std::cout << "(";
             debug_expr(binary_expression->lhs());
             std::cout << " " << binary_expression->op() << " ";
@@ -50,29 +50,29 @@ void debug_expr(const std::shared_ptr<fluke::Expression> &expr) {
             std::cout << ")";
             break;
         } case fluke::NodeType::UNARY_EXPRESSION: {
-            std::shared_ptr<fluke::UnaryExpression> unary_expression = std::static_pointer_cast<fluke::UnaryExpression>(expr);
+            const std::shared_ptr<fluke::UnaryExpression> unary_expression = std::static_pointer_cast<fluke::UnaryExpression>(expr);
             std::cout << "(" << unary_expression->op();
             debug_expr(unary_expression->value());
             std::cout << ")";
             break;
         } case fluke::NodeType::INT_EXPRESSION: {
-            std::shared_ptr<fluke::IntExpression> int_expression = std::static_pointer_cast<fluke::IntExpression>(expr);
+            const std::shared_ptr<fluke::IntExpression> int_expression = std::static_pointer_cast<fluke::IntExpression>(expr);
             std::cout << int_expression->value();
             break;
         } case fluke::NodeType::FLOAT_EXPRESSION: {
-            std::shared_ptr<fluke::FloatExpression> float_expression = std::static_pointer_cast<fluke::FloatExpression>(expr);
+            const std::shared_ptr<fluke::FloatExpression> float_expression = std::static_pointer_cast<fluke::FloatExpression>(expr);
             std::cout << float_expression->value();
             break;
         } case fluke::NodeType::IDENTIFIER_EXPRESSION: {
-            std::shared_ptr<fluke::IdentifierExpression> identifier_expression = std::static_pointer_cast<fluke::IdentifierExpression>(expr);
+            const std::shared_ptr<fluke::IdentifierExpression> identifier_expression = std::static_pointer_cast<fluke::IdentifierExpression>(expr);
             std::cout << identifier_expression->symbol();
             break;
         } case fluke::NodeType::BOOLEAN_EXPRESSION: {
-            std::shared_ptr<fluke::BooleanExpression> boolean_expression = std::static_pointer_cast<fluke::BooleanExpression>(expr);
+            const std::shared_ptr<fluke::BooleanExpression> boolean_expression = std::static_pointer_cast<fluke::BooleanExpression>(expr);
             std::cout << (boolean_expression->value() ? "true" : "false");
             break;
         } case fluke::NodeType::GROUPING_EXPRESSION: {
-            std::shared_ptr<fluke::GroupExpression> group_expression = std::static_pointer_cast<fluke::GroupExpression>(expr);
+            const std::shared_ptr<fluke::GroupExpression> group_expression = std::static_pointer_cast<fluke::GroupExpression>(expr);
             debug_expr(group_expression->value());
             break;
         } default:
@@ -88,7 +88,7 @@ void debug_stmt(const std::shared_ptr<fluke::Statement> &stmt, const size_t inde
 
     switch (stmt->type()) {
         case fluke::NodeType::BLOCK_STATEMENT: {
-            std::shared_ptr<fluke::BlockStatement> block_statement = std::static_pointer_cast<fluke::BlockStatement>(stmt);
+            const std::shared_ptr<fluke::BlockStatement> block_statement = std::static_pointer_cast<fluke::BlockStatement>(stmt);
             std::cout << "(BLOCK STATEMENT, len=" << block_statement->body().size() << ") {\n";
             for (const std::shared_ptr<fluke::Statement> &line : block_statement->body()) {
                 debug_stmt(line, indentation+1);
@@ -102,14 +102,14 @@ void debug_stmt(const std::shared_ptr<fluke::Statement> &stmt, const size_t inde
             std::cout << "}";
             break;
         } case fluke::NodeType::NORMAL_VARIABLE_DECLARATION_STATEMENT: {
-            std::shared_ptr<fluke::NormalVariableDeclaration> normal_variable_declaration = std::static_pointer_cast<fluke::NormalVariableDeclaration>(stmt);
+            const std::shared_ptr<fluke::NormalVariableDeclaration> normal_variable_declaration = std::static_pointer_cast<fluke::NormalVariableDeclaration>(stmt);
             std::cout << "LET " << normal_variable_declaration->var_name() << ": ";
             debug_type(normal_variable_declaration->var_type());
             std::cout << " = ";
             debug_expr(normal_variable_declaration->value());
             break;
         } case fluke::NodeType::VARIABLE_DECLARATION_WITH_EXPRESSION_CONDITION_STATEMENT: {
-            std::shared_ptr<fluke::VariableDeclarationWithExpressionCondition> variable_declaration_with_expression_condition = std::static_pointer_cast<fluke::VariableDeclarationWithExpressionCondition>(stmt);
+            const std::shared_ptr<fluke::VariableDeclarationWithExpressionCondition> variable_declaration_with_expression_condition = std::static_pointer_cast<fluke::VariableDeclarationWithExpressionCondition>(stmt);
             std::cout << "LET " << variable_declaration_with_expression_condition->var_name() << ": ";
             debug_type(variable_declaration_with_expression_condition->var_type());
             std::cout << "(";
@@ -118,7 +118,7 @@ void debug_stmt(const std::shared_ptr<fluke::Statement> &stmt, const size_t inde
             debug_expr(variable_declaration_with_expression_condition->value());
             break;
         } case fluke::NodeType::IF_ELSE_STATEMENT: {
-            std::shared_ptr<fluke::IfElseStatement> if_else_statement = std::static_pointer_cast<fluke::IfElseStatement>(stmt);
+            const std::shared_ptr<fluke::IfElseStatement> if_else_statement = std::static_pointer_cast<fluke::IfElseStatement>(stmt);
             std::cout << "IF ";
             debug_expr(if_else_statement->condition());
             std::cout << "\n";
@@ -135,7 +135,7 @@ void debug_stmt(const std::shared_ptr<fluke::Statement> &stmt, const size_t inde
 
             break;
         } case fluke::NodeType::WHILE_STATEMENT: {
-            std::shared_ptr<fluke::WhileStatement> while_statement = std::static_pointer_cast<fluke::WhileStatement>(stmt);
+            const std::shared_ptr<fluke::WhileStatement> while_statement = std::static_pointer_cast<fluke::WhileStatement>(stmt);
             std::cout << "WHILE ";
             debug_expr(while_statement->condition());
             std::cout << "\n";
@@ -152,7 +152,7 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    std::string command = argv[1];
+    const std::string command = argv[1];
     if (command == "help") {
         std::cout << "List of commands:\n[1] fluke --version: Shows the version of fluke that you are using\n[2] fluke help: Shows all the commands you can use\n[3] fluke clean: Clears the terminal\n[4] fluke conv <file_name>: Transpiles the code to C++";
         return 0;
@@ -178,7 +178,7 @@ int main(int argc, char* argv[]) {
             return 0;
         }
 
-        std::string file_name = argv[2];
+        const std::string file_name = argv[2];
         std::ifstream src(file_name);
         if (!src) {
             std::cout << "File '" << file_name << "' cannot be found\n";

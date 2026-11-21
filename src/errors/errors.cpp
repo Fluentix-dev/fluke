@@ -1,6 +1,5 @@
 #include "errors.hpp"
 #include "../positions/positions.hpp"
-#include <cstddef>
 #include <iostream>
 #include <string>
 namespace fluke {

@@ -263,7 +263,7 @@ namespace fluke {
             }
         }
 
-        Position start = this->position;
+        const Position start = this->position;
         this->advance();
         tokens.push_back(Token(start, this->position, TokenType::END_OF_FILE, "EOF"));
         return Result<std::vector<Token>>(tokens, Error(this->position, this->position, "", ""));

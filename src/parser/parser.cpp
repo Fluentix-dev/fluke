@@ -294,9 +294,9 @@ namespace fluke {
         }
 
         if (this->tokens[this->index].type() == TokenType::IDENTIFIER) {
-            Position start = this->tokens[this->index].start();
-            Position end = this->tokens[this->index].end();
-            std::string type_name = this->tokens[this->index].value();
+            const Position start = this->tokens[this->index].start();
+            const Position end = this->tokens[this->index].end();
+            const std::string type_name = this->tokens[this->index].value();
             this->advance();
             return Result<std::shared_ptr<Type>>(std::make_shared<IdentifierType>(start, end, type_name), Error(this->tokens[0].start(), this->tokens[0].start(), "", ""));
         }
@@ -305,7 +305,7 @@ namespace fluke {
     }
 
     Result<std::shared_ptr<Statement>> Parser::let() {
-        Position start = this->tokens[this->index].start();
+        const Position start = this->tokens[this->index].start();
         this->advance();
         if (this->index >= this->tokens.size()) {
             return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[0].start(), this->tokens[0].end(), "Syntax Error", "expected a variable name"));
@@ -315,7 +315,7 @@ namespace fluke {
             return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[this->index].start(), this->tokens[this->index].end(), "Syntax Error", "expected a variable name, got '" + this->tokens[this->index].value() + "'"));
         }
 
-        std::string var_name = this->tokens[this->index].value();
+        const std::string var_name = this->tokens[this->index].value();
         this->advance();
         if (this->index >= this->tokens.size()) {
             return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[0].start(), this->tokens[0].end(), "Syntax Error", "expected ':'"));
@@ -326,7 +326,7 @@ namespace fluke {
         }
 
         this->advance();
-        Result<std::shared_ptr<Type>> type = this->type();
+        const Result<std::shared_ptr<Type>> type = this->type();
         if (!type.error().type().empty()) {
             return Result<std::shared_ptr<Statement>>(nullptr, type.error());
         }
@@ -340,7 +340,7 @@ namespace fluke {
                 return Result<std::shared_ptr<Statement>>(std::make_shared<NormalVariableDeclaration>(start, type.result()->end(), var_name, type.result(), nullptr), type.error());
             case TokenType::EQUALS: {
                 this->advance();
-                Result<std::shared_ptr<Expression>> value = this->expression();
+                const Result<std::shared_ptr<Expression>> value = this->expression();
                 if (!value.error().type().empty()) {
                     return Result<std::shared_ptr<Statement>>(nullptr, value.error());
                 }
@@ -348,7 +348,7 @@ namespace fluke {
                 return Result<std::shared_ptr<Statement>>(std::make_shared<NormalVariableDeclaration>(start, value.result()->end(), var_name, type.result(), value.result()), type.error());
             } case TokenType::LEFT_PAREN: {
                 this->advance();
-                Result<std::shared_ptr<Expression>> condition = this->expression();
+                const Result<std::shared_ptr<Expression>> condition = this->expression();
                 if (!condition.error().type().empty()) {
                     return Result<std::shared_ptr<Statement>>(nullptr, condition.error());
                 }
@@ -371,7 +371,7 @@ namespace fluke {
                         return Result<std::shared_ptr<Statement>>(std::make_shared<VariableDeclarationWithExpressionCondition>(start, type.result()->end(), var_name, type.result(), condition.result(), nullptr), type.error());
                     case TokenType::EQUALS: {
                         this->advance();
-                        Result<std::shared_ptr<Expression>> value = this->expression();
+                        const Result<std::shared_ptr<Expression>> value = this->expression();
                         if (!value.error().type().empty()) {
                             return Result<std::shared_ptr<Statement>>(nullptr, value.error());
                         }
