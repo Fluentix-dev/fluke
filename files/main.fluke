@@ -1,6 +1,4 @@
-let a: int = 5;
-if a {
-    67;
-} else {
-    4;
+let a: bool;
+while a {
+    # code
 }

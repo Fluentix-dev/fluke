@@ -30,5 +30,6 @@ namespace fluke {
         Result<std::shared_ptr<Statement>> let();
         Result<std::shared_ptr<Statement>> block();
         Result<std::shared_ptr<Statement>> if_statement();
+        Result<std::shared_ptr<Statement>> while_statement();
     };
 }

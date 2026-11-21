@@ -32,7 +32,8 @@ namespace fluke {
             {"true", TokenType::TRUE},
             {"false", TokenType::FALSE},
             {"if", TokenType::IF},
-            {"else", TokenType::ELSE}
+            {"else", TokenType::ELSE},
+            {"while", TokenType::WHILE}
         };
 
         std::vector<Token> tokens = {};

@@ -31,7 +31,8 @@ namespace fluke {
         TRUE,
         FALSE,
         IF,
-        ELSE
+        ELSE,
+        WHILE
     };
 
     struct Token {

@@ -53,4 +53,13 @@ namespace fluke {
     std::shared_ptr<Statement> IfElseStatement::else_body() const {
         return this->else_body_;
     }
+
+    WhileStatement::WhileStatement(const Position &start, const Position &end, const std::shared_ptr<Expression> &condition, const std::shared_ptr<Statement> &body) : Statement(start, end, NodeType::WHILE_STATEMENT), condition_(condition), body_(body) {}
+    std::shared_ptr<Expression> WhileStatement::condition() const {
+        return this->condition_;
+    }
+
+    std::shared_ptr<Statement> WhileStatement::body() const {
+        return this-> body_;
+    }
 }

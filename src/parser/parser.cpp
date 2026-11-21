@@ -60,6 +60,8 @@ namespace fluke {
                 return this->block();
             case TokenType::IF:
                 return this->if_statement();
+            case TokenType::WHILE:
+                return this->while_statement();
             default: {
                 const Result<std::shared_ptr<Expression>> expr = this->expression();
                 if (!expr.error().type().empty()) {
@@ -446,5 +448,22 @@ namespace fluke {
         }
 
         return Result<std::shared_ptr<Statement>>(std::make_shared<IfElseStatement>(start, else_body.result()->end(), condition.result(), body.result(), else_body.result()), condition.error());
+    }
+
+    Result<std::shared_ptr<Statement>> Parser::while_statement() {
+        const Position start = this->tokens[this->index].start();
+        this->advance();
+
+        const Result<std::shared_ptr<Expression>> condition = this->expression();
+        if (!condition.error().type().empty()) {
+            return Result<std::shared_ptr<Statement>>(nullptr, condition.error());
+        }
+
+        const Result<std::shared_ptr<Statement>> body = this->statement();
+        if (!body.error().type().empty()) {
+            return body;
+        }
+
+        return Result<std::shared_ptr<Statement>>(std::make_shared<WhileStatement>(start, body.result()->end(), condition.result(), body.result()), condition.error());
     }
 }

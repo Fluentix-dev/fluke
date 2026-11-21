@@ -348,6 +348,18 @@ namespace fluke {
                 }
 
                 return this->typecheck_(if_else->else_body(), scope, expression_typechecker);
+            } case NodeType::WHILE_STATEMENT: {
+                std::shared_ptr<WhileStatement> while_loop = std::static_pointer_cast<WhileStatement>(stmt);
+                Result<std::string> condition_type = expression_typechecker.get_type(while_loop->condition(), *scope);
+                if (!condition_type.error().type().empty()) {
+                    return condition_type.error();
+                }
+
+                if (!expression_typechecker.same_type(condition_type.result(), "bool")) {
+                    return Error(while_loop->condition()->start(), while_loop->condition()->end(), "Type Error", "expected a 'bool' for the condition, got '" + condition_type.result() + "'");
+                }
+
+                return this->typecheck_(while_loop->body(), scope, expression_typechecker);
             } default: {
                 std::shared_ptr<Expression> expr = std::dynamic_pointer_cast<Expression>(stmt);
                 if (expr) {

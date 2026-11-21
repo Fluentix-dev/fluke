@@ -134,6 +134,13 @@ void debug_stmt(const std::shared_ptr<fluke::Statement> &stmt, const size_t inde
             }
 
             break;
+        } case fluke::NodeType::WHILE_STATEMENT: {
+            std::shared_ptr<fluke::WhileStatement> while_statement = std::static_pointer_cast<fluke::WhileStatement>(stmt);
+            std::cout << "WHILE ";
+            debug_expr(while_statement->condition());
+            std::cout << "\n";
+            debug_stmt(while_statement->body(), indentation+1);
+            break;
         } default:
             debug_expr(std::static_pointer_cast<fluke::Expression>(stmt));
     }
