@@ -1,4 +1,1 @@
-let a: bool;
-while a {
-    # code
-}
+let player_num: int where player_num >= 2 := 1;

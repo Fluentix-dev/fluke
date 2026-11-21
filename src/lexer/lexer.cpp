@@ -33,7 +33,8 @@ namespace fluke {
             {"false", TokenType::FALSE},
             {"if", TokenType::IF},
             {"else", TokenType::ELSE},
-            {"while", TokenType::WHILE}
+            {"while", TokenType::WHILE},
+            {"where", TokenType::WHERE}
         };
 
         std::vector<Token> tokens = {};
@@ -160,7 +161,18 @@ namespace fluke {
                 } case ':': {
                     const Position start = this->position;
                     this->advance();
-                    tokens.push_back(Token(start, this->position, TokenType::COLON, ":"));
+                    if (this->index >= this->src.size()) {
+                        tokens.push_back(Token(start, this->position, TokenType::COLON, ":"));
+                        continue;
+                    }
+
+                    if (this->src[this->index] == '=') {
+                        this->advance();
+                        tokens.push_back(Token(start, this->position, TokenType::DECLARE_EQUALS, ":="));
+                    } else {
+                        tokens.push_back(Token(start, this->position, TokenType::COLON, ":"));
+                    }
+
                     break;
                 } case '&': {
                     Position start = this->position;

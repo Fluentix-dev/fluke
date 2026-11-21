@@ -112,9 +112,9 @@ void debug_stmt(const std::shared_ptr<fluke::Statement> &stmt, const size_t inde
             const std::shared_ptr<fluke::VariableDeclarationWithExpressionCondition> variable_declaration_with_expression_condition = std::static_pointer_cast<fluke::VariableDeclarationWithExpressionCondition>(stmt);
             std::cout << "LET " << variable_declaration_with_expression_condition->var_name() << ": ";
             debug_type(variable_declaration_with_expression_condition->var_type());
-            std::cout << "(";
+            std::cout << " WHERE ";
             debug_expr(variable_declaration_with_expression_condition->condition());
-            std::cout << ") = ";
+            std::cout << " := ";
             debug_expr(variable_declaration_with_expression_condition->value());
             break;
         } case fluke::NodeType::IF_ELSE_STATEMENT: {

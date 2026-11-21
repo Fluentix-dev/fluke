@@ -338,7 +338,7 @@ namespace fluke {
         switch (this->tokens[this->index].type()) {
             case TokenType::SEMICOLON:
                 return Result<std::shared_ptr<Statement>>(std::make_shared<NormalVariableDeclaration>(start, type.result()->end(), var_name, type.result(), nullptr), type.error());
-            case TokenType::EQUALS: {
+            case TokenType::DECLARE_EQUALS: {
                 this->advance();
                 const Result<std::shared_ptr<Expression>> value = this->expression();
                 if (!value.error().type().empty()) {
@@ -346,7 +346,7 @@ namespace fluke {
                 }
 
                 return Result<std::shared_ptr<Statement>>(std::make_shared<NormalVariableDeclaration>(start, value.result()->end(), var_name, type.result(), value.result()), type.error());
-            } case TokenType::LEFT_PAREN: {
+            } case TokenType::WHERE: {
                 this->advance();
                 const Result<std::shared_ptr<Expression>> condition = this->expression();
                 if (!condition.error().type().empty()) {
@@ -354,22 +354,13 @@ namespace fluke {
                 }
 
                 if (this->index >= this->tokens.size()) {
-                    return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[0].start(), this->tokens[0].end(), "Syntax Error", "expected ')'"));
-                }
-
-                if (this->tokens[this->index].type() != TokenType::RIGHT_PAREN) {
-                    return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[this->index].start(), this->tokens[this->index].end(), "Syntax Error", "expected ')', got '" + this->tokens[this->index].value() + "'"));
-                }
-
-                this->advance();
-                if (this->index >= this->tokens.size()) {
-                    return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[0].start(), this->tokens[0].end(), "Syntax Error", "expected ';' or '='"));
+                    return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[0].start(), this->tokens[0].end(), "Syntax Error", "expected ';' or ':='"));
                 }
 
                 switch (this->tokens[this->index].type()) {
                     case TokenType::SEMICOLON:
                         return Result<std::shared_ptr<Statement>>(std::make_shared<VariableDeclarationWithExpressionCondition>(start, type.result()->end(), var_name, type.result(), condition.result(), nullptr), type.error());
-                    case TokenType::EQUALS: {
+                    case TokenType::DECLARE_EQUALS: {
                         this->advance();
                         const Result<std::shared_ptr<Expression>> value = this->expression();
                         if (!value.error().type().empty()) {
@@ -378,10 +369,10 @@ namespace fluke {
 
                         return Result<std::shared_ptr<Statement>>(std::make_shared<VariableDeclarationWithExpressionCondition>(start, value.result()->end(), var_name, type.result(), condition.result(), value.result()), type.error());
                     } default:
-                        return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[this->index].start(), this->tokens[this->index].end(), "Syntax Error", "expected ';' or '='"));
+                        return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[this->index].start(), this->tokens[this->index].end(), "Syntax Error", "expected ';' or ':='"));
                 }
             } default:
-                return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[this->index].start(), this->tokens[this->index].end(), "Syntax Error", "expected ';', '=', or a condition for the variable, got '" + this->tokens[this->index].value() + "'"));
+                return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[this->index].start(), this->tokens[this->index].end(), "Syntax Error", "expected ';', ':=', or 'where', got '" + this->tokens[this->index].value() + "'"));
         }
     }
 
