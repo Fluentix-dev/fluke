@@ -95,6 +95,10 @@ void debug_stmt(const std::shared_ptr<fluke::Statement> &stmt, const size_t inde
                 std::cout << "\n";
             }
 
+            for (size_t i = 0; i < indentation; i++) {
+                std::cout << "    ";
+            }
+            
             std::cout << "}";
             break;
         } case fluke::NodeType::NORMAL_VARIABLE_DECLARATION_STATEMENT: {
@@ -112,6 +116,23 @@ void debug_stmt(const std::shared_ptr<fluke::Statement> &stmt, const size_t inde
             debug_expr(variable_declaration_with_expression_condition->condition());
             std::cout << ") = ";
             debug_expr(variable_declaration_with_expression_condition->value());
+            break;
+        } case fluke::NodeType::IF_ELSE_STATEMENT: {
+            std::shared_ptr<fluke::IfElseStatement> if_else_statement = std::static_pointer_cast<fluke::IfElseStatement>(stmt);
+            std::cout << "IF ";
+            debug_expr(if_else_statement->condition());
+            std::cout << "\n";
+            debug_stmt(if_else_statement->body(), indentation+1);
+            if (if_else_statement->else_body() != nullptr) {
+                std::cout << "\n";
+                for (size_t i = 0; i < indentation; i++) {
+                    std::cout << "    ";
+                }
+
+                std::cout << "ELSE\n";
+                debug_stmt(if_else_statement->else_body(), indentation+1);
+            }
+
             break;
         } default:
             debug_expr(std::static_pointer_cast<fluke::Expression>(stmt));
@@ -182,7 +203,10 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
+        // only uncomment this when you need debugging on the parser
         // debug_stmt(ast.result(), 0ULL);
+        // std::cout << "\n";
+
         fluke::Typechecker typechecker = fluke::Typechecker(ast.result());
         const fluke::Error typechecker_error = typechecker.typecheck();
         if (!typechecker_error.type().empty()) {

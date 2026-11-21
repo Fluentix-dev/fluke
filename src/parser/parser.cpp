@@ -12,12 +12,13 @@ namespace fluke {
         this->index++;
     }
 
-    Result<std::shared_ptr<Statement>> Parser::check_semicolon(const std::shared_ptr<Statement> &stmt) const {
+    Result<std::shared_ptr<Statement>> Parser::check_semicolon(const std::shared_ptr<Statement> &stmt) {
         if (this->index >= this->tokens.size()) {
             return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[0].start(), this->tokens[0].start(), "Syntax Error", "expected ';'"));
         }
 
         if (this->tokens[this->index].type() == TokenType::SEMICOLON) {
+            this->advance();
             return Result<std::shared_ptr<Statement>>(stmt, Error(this->tokens[0].start(), this->tokens[0].end(), "", ""));
         }
 
@@ -55,7 +56,11 @@ namespace fluke {
                 }
 
                 return this->check_semicolon(let_statement.result());
-            } default: {
+            } case TokenType::LEFT_BRACE:
+                return this->block();
+            case TokenType::IF:
+                return this->if_statement();
+            default: {
                 const Result<std::shared_ptr<Expression>> expr = this->expression();
                 if (!expr.error().type().empty()) {
                     return Result<std::shared_ptr<Statement>>(nullptr, expr.error());
@@ -376,5 +381,70 @@ namespace fluke {
             } default:
                 return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[this->index].start(), this->tokens[this->index].end(), "Syntax Error", "expected ';', '=', or a condition for the variable, got '" + this->tokens[this->index].value() + "'"));
         }
+    }
+
+    Result<std::shared_ptr<Statement>> Parser::block() {
+        const Position start = this->tokens[this->index].start();
+        this->advance();
+        std::vector<std::shared_ptr<Statement>> body = {};
+        while (this->index < this->tokens.size() && this->tokens[this->index].type() != TokenType::RIGHT_BRACE && this->tokens[this->index].type() != TokenType::END_OF_FILE) {
+            while (this->index < this->tokens.size() && this->tokens[this->index].type() == TokenType::SEMICOLON) {
+                this->advance();
+            }
+
+            if (this->index >= this->tokens.size() || this->tokens[this->index].type() == TokenType::END_OF_FILE || this->tokens[this->index].type() == TokenType::RIGHT_BRACE) {
+                break;
+            }
+
+            const Result<std::shared_ptr<Statement>> stmt = this->statement();
+            if (!stmt.error().type().empty()) {
+                return Result<std::shared_ptr<Statement>>(nullptr, stmt.error());
+            }
+
+            body.push_back(stmt.result());
+        }
+
+        if (this->index < this->tokens.size() && this->tokens[this->index].type() == TokenType::RIGHT_BRACE) {
+            const Position end = this->tokens[this->index].end();
+            this->advance();
+            return Result<std::shared_ptr<Statement>>(std::make_shared<BlockStatement>(start, end, body), Error(this->tokens[0].start(), this->tokens[0].start(), "", ""));
+        }
+
+        if (this->index < this->tokens.size()) {
+            return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[this->index].start(), this->tokens[this->index].end(), "Syntax Error", "missing '}'"));
+        }
+
+        return Result<std::shared_ptr<Statement>>(nullptr, Error(this->tokens[0].start(), this->tokens[0].start(), "Syntax Error", "missing '}'"));
+    }
+
+    Result<std::shared_ptr<Statement>> Parser::if_statement() {
+        const Position start = this->tokens[this->index].start();
+        this->advance();
+
+        const Result<std::shared_ptr<Expression>> condition = this->expression();
+        if (!condition.error().type().empty()) {
+            return Result<std::shared_ptr<Statement>>(nullptr, condition.error());
+        }
+
+        const Result<std::shared_ptr<Statement>> body = this->statement();
+        if (!body.error().type().empty()) {
+            return body;
+        }
+
+        if (this->index >= this->tokens.size()) {
+            return Result<std::shared_ptr<Statement>>(std::make_shared<IfElseStatement>(start, body.result()->end(), condition.result(), body.result(), nullptr), condition.error());
+        }
+
+        if (this->tokens[this->index].type() != TokenType::ELSE) {
+            return Result<std::shared_ptr<Statement>>(std::make_shared<IfElseStatement>(start, body.result()->end(), condition.result(), body.result(), nullptr), condition.error());
+        }
+
+        this->advance();
+        const Result<std::shared_ptr<Statement>> else_body = this->statement();
+        if (!else_body.error().type().empty()) {
+            return else_body;
+        }
+
+        return Result<std::shared_ptr<Statement>>(std::make_shared<IfElseStatement>(start, else_body.result()->end(), condition.result(), body.result(), else_body.result()), condition.error());
     }
 }

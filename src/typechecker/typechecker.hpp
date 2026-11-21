@@ -37,7 +37,6 @@ namespace fluke {
         Error typecheck();
     private:
         std::shared_ptr<BlockStatement> ast;
-        TypecheckerScope scope;
-        Error typecheck_(const std::shared_ptr<Statement> &stmt, const ExpressionTypechecker &expression_typechecker);
+        Error typecheck_(const std::shared_ptr<Statement> &stmt, std::shared_ptr<TypecheckerScope> &scope, const ExpressionTypechecker &expression_typechecker);
     };
 }

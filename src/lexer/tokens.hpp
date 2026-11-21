@@ -25,9 +25,13 @@ namespace fluke {
         AND,
         OR,
         NOT,
+        LEFT_BRACE,
+        RIGHT_BRACE,
         LET,
         TRUE,
-        FALSE
+        FALSE,
+        IF,
+        ELSE
     };
 
     struct Token {

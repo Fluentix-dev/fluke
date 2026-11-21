@@ -89,16 +89,16 @@ namespace fluke {
             }
 
             std::cout << "\033[0m\n";
-            for (size_t i = 0; i < end_digits+4; i++) {
+            for (size_t i = 0; i < end_digits; i++) {
                 std::cout << " ";
             }
 
+            std::cout << "\033[1m\033[31m || \033[31m";
             for (size_t i = 1; i < start_col; i++) {
                 std::cout << " ";
             }
 
-            std::cout << "\033[1m\033[31m";
-            for (size_t i = start_col; i < line_start.size(); i++) {
+            for (size_t i = start_col; i <= line_start.size(); i++) {
                 std::cout << "^";
             }
 
@@ -109,12 +109,12 @@ namespace fluke {
                     std::cout << " ";
                 }
 
-                std::cout << "\033[1m\033[32m" << i << " || \033[1m" << lines[i-1] << "\033[0m\n";
-                for (size_t i = 0; i < end_digits+4; i++) {
+                std::cout << "\033[1m\033[32m" << i << " || \033[0m\033[1m" << lines[i-1] << "\033[0m\n";
+                for (size_t i = 0; i < end_digits; i++) {
                     std::cout << " ";
                 }
 
-                std::cout << "\033[1m\033[31m";
+                std::cout << "\033[1m\033[31m || \033[31m";
                 for (const char &_ : lines[i-1]) {
                     std::cout << "^";
                 }
@@ -122,9 +122,9 @@ namespace fluke {
                 std::cout << "\033[0m\n";
             }
 
-            std::cout << "\033[1m\033[32m" << end_line << " || \033[1m";
+            std::cout << "\033[1m\033[32m" << end_line << " || \033[0m\033[1m";
             for (size_t i = 0; i < line_end.size(); i++) {
-                if (i < end_col-1) {
+                if (i == end_col-1) {
                     std::cout << "\033[0m";
                 }
 

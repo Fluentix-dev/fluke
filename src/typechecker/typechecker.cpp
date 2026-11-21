@@ -26,18 +26,53 @@ namespace fluke {
                     break;
             }
 
-            for (size_t j = 0; j < 2; j++) {
-                std::string type1 = (j == 0 ? "int" : "float");
-                for (size_t k = 0; k < 2; k++) {
-                    std::string type2 = (k == 0 ? "int" : "float");
-                    std::string result = (j+k == 0 ? "int" : "float");
-                    this->operation_map[type1][op][type2] = result;
+            for (size_t j = 0; j < 3; j++) {
+                std::string type1;
+                switch (j) {
+                    case 0:
+                        type1 = "int";
+                        break;
+                    case 1:
+                        type1 = "float";
+                        break;
+                    case 2:
+                        type1 = "bool";
+                        break;
+                }
+
+                for (size_t k = 0; k < 3; k++) {
+                    std::string type2;
+                    switch (k) {
+                        case 0:
+                            type2 = "int";
+                            break;
+                        case 1:
+                            type2 = "float";
+                            break;
+                        case 2:
+                            type2 = "bool";
+                            break;
+                    }
+                    
+                    this->operation_map[type1][op][type2] = (type1 == "float" || type2 == "float" ? "float" : "int");
                 }
             }
         }
 
-        for (size_t i = 0; i < 2; i++) {
-            std::string type = (i == 0 ? "int" : "float");
+        for (size_t i = 0; i < 3; i++) {
+            std::string type;
+            switch (i) {
+                case 0:
+                    type = "int";
+                    break;
+                case 1:
+                    type = "float";
+                    break;
+                case 2:
+                    type = "bool";
+                    break;
+            }
+
             for (size_t j = 0; j < 6; j++) {
                 std::string op;
                 switch (j) {
@@ -68,11 +103,23 @@ namespace fluke {
         this->operation_map["bool"]["&&"]["bool"] = "bool";
         this->operation_map["bool"]["||"]["bool"] = "bool";
         this->operation_map["<unary>"]["!"]["bool"] = "bool";
-        for (size_t i = 0; i < 2; i++) {
-            std::string type = (i == 0 ? "int" : "float");
+        for (size_t i = 0; i < 3; i++) {
+            std::string type;
+            switch (i) {
+                case 0:
+                    type = "int";
+                    break;
+                case 1:
+                    type = "float";
+                    break;
+                case 2:
+                    type = "bool";
+                    break;
+            }
+
             for (size_t j = 0; j < 2; j++) {
                 std::string op = (j == 0 ? "+" : "-");
-                this->operation_map["<unary>"][op][type] = type;
+                this->operation_map["<unary>"][op][type] = (type == "float" ? "float" : "int");
             }
         }
     }
@@ -198,7 +245,7 @@ namespace fluke {
                     return condition_type.error();
                 }
 
-                if (condition_type.result() != "bool") {
+                if (!expression_typechecker.same_type(condition_type.result(), "bool")) {
                     return Error(variable_declaration_with_expression_condition->condition()->start(), variable_declaration_with_expression_condition->condition()->end(), "Type Error", "variable condition must be a 'bool', got '" + condition_type.result() + "'");
                 }
 
@@ -257,17 +304,19 @@ namespace fluke {
         return this->parent->get_value(expr);
     }
     
-    Typechecker::Typechecker(const std::shared_ptr<BlockStatement> &ast) : ast(ast), scope(std::make_shared<TypecheckerScope>(nullptr)) {}
+    Typechecker::Typechecker(const std::shared_ptr<BlockStatement> &ast) : ast(ast) {}
     Error Typechecker::typecheck() {
-        return this->typecheck_(this->ast, ExpressionTypechecker());
+        std::shared_ptr<TypecheckerScope> proband_scope = nullptr;
+        return this->typecheck_(this->ast, proband_scope, ExpressionTypechecker());
     }
 
-    Error Typechecker::typecheck_(const std::shared_ptr<Statement> &stmt, const ExpressionTypechecker &expression_typechecker) {
+    Error Typechecker::typecheck_(const std::shared_ptr<Statement> &stmt, std::shared_ptr<TypecheckerScope> &scope, const ExpressionTypechecker &expression_typechecker) {
         switch (stmt->type()) {
             case NodeType::BLOCK_STATEMENT: {
                 std::shared_ptr<BlockStatement> block = std::static_pointer_cast<BlockStatement>(stmt);
+                std::shared_ptr<TypecheckerScope> child_scope = std::make_shared<TypecheckerScope>(scope);
                 for (const std::shared_ptr<Statement> &line : block->body()) {
-                    Error error = this->typecheck_(line, expression_typechecker);
+                    Error error = this->typecheck_(line, child_scope, expression_typechecker);
                     if (!error.type().empty()) {
                         return error;
                     }
@@ -275,13 +324,34 @@ namespace fluke {
 
                 return Error(block->start(), block->start(), "", "");
             } case NodeType::NORMAL_VARIABLE_DECLARATION_STATEMENT:
-                return this->scope.declare(stmt, expression_typechecker);
+                return scope->declare(stmt, expression_typechecker);
             case NodeType::VARIABLE_DECLARATION_WITH_EXPRESSION_CONDITION_STATEMENT:
-                return this->scope.declare(stmt, expression_typechecker);
-            default: {
+                return scope->declare(stmt, expression_typechecker);
+            case NodeType::IF_ELSE_STATEMENT: {
+                std::shared_ptr<IfElseStatement> if_else = std::static_pointer_cast<IfElseStatement>(stmt);
+                Result<std::string> condition_type = expression_typechecker.get_type(if_else->condition(), *scope);
+                if (!condition_type.error().type().empty()) {
+                    return condition_type.error();
+                }
+
+                if (!expression_typechecker.same_type(condition_type.result(), "bool")) {
+                    return Error(if_else->condition()->start(), if_else->condition()->end(), "Type Error", "expected a 'bool' for the condition, got '" + condition_type.result() + "'");
+                }
+
+                Error if_body = this->typecheck_(if_else->body(), scope, expression_typechecker);
+                if (!if_body.type().empty()) {
+                    return if_body;
+                }
+
+                if (if_else->else_body() == nullptr) {
+                    return if_body;
+                }
+
+                return this->typecheck_(if_else->else_body(), scope, expression_typechecker);
+            } default: {
                 std::shared_ptr<Expression> expr = std::dynamic_pointer_cast<Expression>(stmt);
                 if (expr) {
-                    return expression_typechecker.get_type(expr, scope).error();
+                    return expression_typechecker.get_type(expr, *scope).error();
                 } else {
                     return Error(stmt->start(), stmt->end(), "Typechecker Error", "it broke: '" + std::to_string(static_cast<int>(stmt->type())) + "'");
                 }

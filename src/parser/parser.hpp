@@ -14,7 +14,7 @@ namespace fluke {
         std::vector<Token> tokens;
         size_t index;
         void advance();
-        Result<std::shared_ptr<Statement>> check_semicolon(const std::shared_ptr<Statement> &stmt) const;
+        Result<std::shared_ptr<Statement>> check_semicolon(const std::shared_ptr<Statement> &stmt);
         Result<std::shared_ptr<Statement>> statement();
         Result<std::shared_ptr<Expression>> expression();
         Result<std::shared_ptr<Expression>> assignment();
@@ -28,5 +28,7 @@ namespace fluke {
         Result<std::shared_ptr<Type>> type();
         Result<std::shared_ptr<Type>> primary_type();
         Result<std::shared_ptr<Statement>> let();
+        Result<std::shared_ptr<Statement>> block();
+        Result<std::shared_ptr<Statement>> if_statement();
     };
 }

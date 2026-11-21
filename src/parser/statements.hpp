@@ -39,4 +39,16 @@ namespace fluke {
         std::shared_ptr<Expression> condition_;
         std::shared_ptr<Expression> value_;
     };
+
+    struct IfElseStatement : public Statement {
+    public:
+        IfElseStatement(const Position &start, const Position &end, const std::shared_ptr<Expression> &condition, const std::shared_ptr<Statement> &body, const std::shared_ptr<Statement> &else_body);
+        std::shared_ptr<Expression> condition() const;
+        std::shared_ptr<Statement> body() const;
+        std::shared_ptr<Statement> else_body() const;
+    private:
+        std::shared_ptr<Expression> condition_;
+        std::shared_ptr<Statement> body_;
+        std::shared_ptr<Statement> else_body_;
+    };
 }

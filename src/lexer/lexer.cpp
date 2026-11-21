@@ -30,7 +30,9 @@ namespace fluke {
         const std::unordered_map<std::string, TokenType> KEYWORDS = {
             {"let", TokenType::LET},
             {"true", TokenType::TRUE},
-            {"false", TokenType::FALSE}
+            {"false", TokenType::FALSE},
+            {"if", TokenType::IF},
+            {"else", TokenType::ELSE}
         };
 
         std::vector<Token> tokens = {};
@@ -189,13 +191,23 @@ namespace fluke {
 
                     if (this->src[this->index] == '|') {
                         this->advance();
-                        tokens.push_back(Token(start, this->position, TokenType::OR, "&&"));
+                        tokens.push_back(Token(start, this->position, TokenType::OR, "||"));
                     } else {
                         start = this->position;
                         this->advance();
                         return Result<std::vector<Token>>(tokens, Error(start, this->position, "Syntax Error", "expected '|', got '" + this->src[this->index]));
                     }
 
+                    break;
+                } case '{': {
+                    const Position start = this->position;
+                    this->advance();
+                    tokens.push_back(Token(start, this->position, TokenType::LEFT_BRACE, "{"));
+                    break;
+                } case '}': {
+                    const Position start = this->position;
+                    this->advance();
+                    tokens.push_back(Token(start, this->position, TokenType::RIGHT_BRACE, "}"));
                     break;
                 } default:
                     if (this->src[this->index] == '.' || ('0' <= this->src[this->index] && this->src[this->index] <= '9')) {

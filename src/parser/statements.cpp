@@ -40,4 +40,17 @@ namespace fluke {
     std::shared_ptr<Expression> VariableDeclarationWithExpressionCondition::value() const {
         return this->value_;
     }
+
+    IfElseStatement::IfElseStatement(const Position &start, const Position &end, const std::shared_ptr<Expression> &condition, const std::shared_ptr<Statement> &body, const std::shared_ptr<Statement> &else_body) : Statement(start, end, NodeType::IF_ELSE_STATEMENT), condition_(condition), body_(body), else_body_(else_body) {}
+    std::shared_ptr<Expression> IfElseStatement::condition() const {
+        return this->condition_;
+    }
+
+    std::shared_ptr<Statement> IfElseStatement::body() const {
+        return this->body_;
+    }
+
+    std::shared_ptr<Statement> IfElseStatement::else_body() const {
+        return this->else_body_;
+    }
 }
