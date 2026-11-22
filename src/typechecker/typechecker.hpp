@@ -25,9 +25,11 @@ namespace fluke {
         TypecheckerScope(const std::shared_ptr<TypecheckerScope> &parent);
         Error declare(const std::shared_ptr<Statement> &stmt, const ExpressionTypechecker &expression_typechecker);
         Result<std::string> assign(const std::shared_ptr<AssignmentExpression> &expr, const ExpressionTypechecker &expression_typechecker);
-        Result<std::string> get_value(const std::shared_ptr<IdentifierExpression> &expr) const;
+        Result<std::string> get_value(const std::shared_ptr<IdentifierExpression> &expr);
+        std::shared_ptr<Statement> get_unused_variable() const;
     private:
         std::unordered_map<std::string, std::string> type_map;
+        std::unordered_map<std::string, std::shared_ptr<Statement>> unused_variables;
         std::shared_ptr<TypecheckerScope> parent;
     };
 

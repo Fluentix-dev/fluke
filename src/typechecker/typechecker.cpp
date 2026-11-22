@@ -170,15 +170,15 @@ namespace fluke {
                 }
 
                 if (!this->operation_map.count("<unary>")) {
-                    return Result<std::string>(nullptr, Error(expr->start(), expr->end(), "Type Error", "there exists no operation '" + unary_expression->op() + "' on '" + value.result() + "'"));
+                    return Result<std::string>("", Error(expr->start(), expr->end(), "Type Error", "there exists no operation '" + unary_expression->op() + "' on '" + value.result() + "'"));
                 }
 
                 if (!this->operation_map.at("<unary>").count(unary_expression->op())) {
-                    return Result<std::string>(nullptr, Error(expr->start(), expr->end(), "Type Error", "there exists no operation '" + unary_expression->op() + "' on '" + value.result() + "'"));
+                    return Result<std::string>("", Error(expr->start(), expr->end(), "Type Error", "there exists no operation '" + unary_expression->op() + "' on '" + value.result() + "'"));
                 }
 
                 if (!this->operation_map.at("<unary>").at(unary_expression->op()).count(value.result())) {
-                    return Result<std::string>(nullptr, Error(expr->start(), expr->end(), "Type Error", "there exists no operation '" + unary_expression->op() + "' on '" + value.result() + "'"));
+                    return Result<std::string>("", Error(expr->start(), expr->end(), "Type Error", "there exists no operation '" + unary_expression->op() + "' on '" + value.result() + "'"));
                 }
 
                 return Result<std::string>(this->operation_map.at("<unary>").at(unary_expression->op()).at(value.result()), value.error());
@@ -209,7 +209,7 @@ namespace fluke {
         return type == expected;
     }
 
-    TypecheckerScope::TypecheckerScope(const std::shared_ptr<TypecheckerScope> &parent) : parent(parent) {}
+    TypecheckerScope::TypecheckerScope(const std::shared_ptr<TypecheckerScope> &parent) : type_map({}), unused_variables({}), parent(parent) {}
     Error TypecheckerScope::declare(const std::shared_ptr<Statement> &stmt, const ExpressionTypechecker &expression_typechecker) {
         switch (stmt->type()) {
             case NodeType::NORMAL_VARIABLE_DECLARATION_STATEMENT: {
@@ -220,6 +220,7 @@ namespace fluke {
 
                 if (normal_variable_declaration->value() == nullptr) {
                     this->type_map[normal_variable_declaration->var_name()] = normal_variable_declaration->var_type()->string_representation();
+                    this->unused_variables[normal_variable_declaration->var_name()] = normal_variable_declaration;
                     return Error(stmt->start(), stmt->end(), "", "");
                 }
 
@@ -233,6 +234,7 @@ namespace fluke {
                 }
 
                 this->type_map[normal_variable_declaration->var_name()] = normal_variable_declaration->var_type()->string_representation();
+                this->unused_variables[normal_variable_declaration->var_name()] = normal_variable_declaration;
                 return value_type.error();
             } case NodeType::VARIABLE_DECLARATION_WITH_EXPRESSION_CONDITION_STATEMENT: {
                 const std::shared_ptr<VariableDeclarationWithExpressionCondition> variable_declaration_with_expression_condition = std::static_pointer_cast<VariableDeclarationWithExpressionCondition>(stmt);
@@ -241,6 +243,7 @@ namespace fluke {
                 }
 
                 this->type_map[variable_declaration_with_expression_condition->var_name()] = variable_declaration_with_expression_condition->var_type()->string_representation();
+                this->unused_variables[variable_declaration_with_expression_condition->var_name()] = variable_declaration_with_expression_condition;
                 const Result<std::string> condition_type = expression_typechecker.get_type(variable_declaration_with_expression_condition->condition(), *this);
                 if (!condition_type.error().type().empty()) {
                     return condition_type.error();
@@ -250,7 +253,12 @@ namespace fluke {
                     return Error(variable_declaration_with_expression_condition->condition()->start(), variable_declaration_with_expression_condition->condition()->end(), "Type Error", "variable condition must be a 'bool', got '" + condition_type.result() + "'");
                 }
 
+                if (this->unused_variables.count(variable_declaration_with_expression_condition->var_name())) {
+                    return Error(variable_declaration_with_expression_condition->condition()->start(), variable_declaration_with_expression_condition->condition()->end(), "Variable Error", "variable '" + variable_declaration_with_expression_condition->var_name() + "' was not used in the condition of the declaration");
+                }
+
                 if (variable_declaration_with_expression_condition->value() == nullptr) {
+                    this->unused_variables[variable_declaration_with_expression_condition->var_name()] = variable_declaration_with_expression_condition;
                     return Error(stmt->start(), stmt->end(), "", "");
                 }
 
@@ -265,6 +273,7 @@ namespace fluke {
                 }
 
                 this->type_map[variable_declaration_with_expression_condition->var_name()] = variable_declaration_with_expression_condition->var_type()->string_representation();
+                this->unused_variables[variable_declaration_with_expression_condition->var_name()] = variable_declaration_with_expression_condition;
                 return value_type.error();
             } default:
                 return Error(stmt->start(), stmt->end(), "Typechecker Error", "not a declaration...");
@@ -273,6 +282,11 @@ namespace fluke {
 
     Result<std::string> TypecheckerScope::assign(const std::shared_ptr<AssignmentExpression> &expr, const ExpressionTypechecker &expression_typechecker) {
         const std::shared_ptr<IdentifierExpression> identifier_expression = std::static_pointer_cast<IdentifierExpression>(expr->assigner());
+        std::shared_ptr<Statement> unused_variable = nullptr;
+        if (this->unused_variables.count(identifier_expression->symbol())) {
+            unused_variable = this->unused_variables.at(identifier_expression->symbol());
+        }
+
         if (this->type_map.count(identifier_expression->symbol())) {
             const Result<std::string> value_type = expression_typechecker.get_type(expr->assignee(), *this);
             if (!value_type.error().type().empty()) {
@@ -281,6 +295,12 @@ namespace fluke {
             
             if (!expression_typechecker.same_type(value_type.result(), this->type_map.at(identifier_expression->symbol()))) {
                 return Result<std::string>("", Error(expr->assignee()->start(), expr->assignee()->end(), "Type Error", "mismatched type, expected '" + this->type_map.at(identifier_expression->symbol()) + "', got '" + value_type.result() + "'"));
+            }
+            
+            if (unused_variable != nullptr) {
+                if (!this->unused_variables.count(identifier_expression->symbol())) {
+                    this->unused_variables[identifier_expression->symbol()] = unused_variable;
+                }
             }
 
             return Result<std::string>(this->type_map.at(identifier_expression->symbol()), Error(expr->start(), expr->start(), "", ""));
@@ -293,8 +313,12 @@ namespace fluke {
         return this->parent->assign(expr, expression_typechecker);
     }
 
-    Result<std::string> TypecheckerScope::get_value(const std::shared_ptr<IdentifierExpression> &expr) const {
+    Result<std::string> TypecheckerScope::get_value(const std::shared_ptr<IdentifierExpression> &expr) {
         if (this->type_map.count(expr->symbol())) {
+            if (this->unused_variables.count(expr->symbol())) {
+                this->unused_variables.erase(expr->symbol());
+            }
+
             return Result<std::string>(this->type_map.at(expr->symbol()), Error(expr->start(), expr->start(), "", ""));
         }
 
@@ -303,6 +327,14 @@ namespace fluke {
         }
 
         return this->parent->get_value(expr);
+    }
+
+    std::shared_ptr<Statement> TypecheckerScope::get_unused_variable() const {
+        if (this->unused_variables.empty()) {
+            return nullptr;
+        }
+
+        return this->unused_variables.begin()->second;
     }
     
     Typechecker::Typechecker(const std::shared_ptr<BlockStatement> &ast) : ast(ast) {}
@@ -321,6 +353,23 @@ namespace fluke {
                     if (!error.type().empty()) {
                         return error;
                     }
+                }
+
+                const std::shared_ptr<Statement> unused_variable = child_scope->get_unused_variable();
+                if (unused_variable != nullptr) {
+                    std::string var_name;
+                    switch (unused_variable->type()) {
+                        case NodeType::NORMAL_VARIABLE_DECLARATION_STATEMENT:
+                            var_name = std::static_pointer_cast<NormalVariableDeclaration>(unused_variable)->var_name();
+                            break;
+                        case NodeType::VARIABLE_DECLARATION_WITH_EXPRESSION_CONDITION_STATEMENT:
+                            var_name = std::static_pointer_cast<VariableDeclarationWithExpressionCondition>(unused_variable)->var_name();
+                            break;
+                        default:
+                            return Error(unused_variable->start(), unused_variable->end(), "Typechecker Error", "it broke again: '" + std::to_string(static_cast<int>(unused_variable->type())) + "'");
+                    }
+
+                    return Error(unused_variable->start(), unused_variable->end(), "Variable Error", "unused variable '" + var_name + "', if this variable declaration was not intended, go to file '" + unused_variable->start().file_name() + "' and find line " + std::to_string(unused_variable->start().line()) + " to remove the declaration");
                 }
 
                 return Error(block->start(), block->start(), "", "");

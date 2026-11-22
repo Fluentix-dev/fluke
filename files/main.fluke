@@ -1,1 +1,5 @@
-let player_num: int where player_num >= 2 := 1;
+while true {
+    while true {
+        67;
+    }
+}

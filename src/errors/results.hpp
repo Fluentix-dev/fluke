@@ -1,5 +1,6 @@
 #pragma once
 #include "errors.hpp"
+#include <vector>
 namespace fluke {
     template<typename T>
     struct Result {
