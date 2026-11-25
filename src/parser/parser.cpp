@@ -62,6 +62,12 @@ namespace fluke {
                 return this->if_statement();
             case TokenType::WHILE:
                 return this->while_statement();
+            case TokenType::BREAK:
+                return this->break_statement();
+            case TokenType::CONTINUE:
+                return this->continue_statement();
+            case TokenType::FOREVER:
+                return this->forever();
             default: {
                 const Result<std::shared_ptr<Expression>> expr = this->expression();
                 if (!expr.error().type().empty()) {
@@ -456,5 +462,31 @@ namespace fluke {
         }
 
         return Result<std::shared_ptr<Statement>>(std::make_shared<WhileStatement>(start, body.result()->end(), condition.result(), body.result()), condition.error());
+    }
+
+    Result<std::shared_ptr<Statement>> Parser::break_statement() {
+        const Position start = this->tokens[this->index].start();
+        const Position end = this->tokens[this->index].end();
+        this->advance();
+        return Result<std::shared_ptr<Statement>>(std::make_shared<BreakStatement>(start, end), Error(start, start, "", ""));
+    }
+
+    Result<std::shared_ptr<Statement>> Parser::continue_statement() {
+        const Position start = this->tokens[this->index].start();
+        const Position end = this->tokens[this->index].end();
+        this->advance();
+        return Result<std::shared_ptr<Statement>>(std::make_shared<ContinueStatement>(start, end), Error(start, start, "", ""));
+    }
+
+    Result<std::shared_ptr<Statement>> Parser::forever() {
+        const Position start = this->tokens[this->index].start();
+        this->advance();
+
+        const Result<std::shared_ptr<Statement>> body = this->statement();
+        if (!body.error().type().empty()) {
+            return body;
+        }
+
+        return Result<std::shared_ptr<Statement>>(std::make_shared<ForeverStatement>(start, body.result()->end(), body.result()), body.error());
     }
 }

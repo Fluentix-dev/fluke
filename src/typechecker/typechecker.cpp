@@ -5,6 +5,7 @@
 #include "../parser/expressions.hpp"
 #include "../errors/results.hpp"
 #include "../parser/types.hpp"
+#include <cstddef>
 #include <memory>
 #include <string>
 namespace fluke {
@@ -340,18 +341,28 @@ namespace fluke {
     Typechecker::Typechecker(const std::shared_ptr<BlockStatement> &ast) : ast(ast) {}
     Error Typechecker::typecheck() {
         std::shared_ptr<TypecheckerScope> proband_scope = nullptr;
-        return this->typecheck_(this->ast, proband_scope, ExpressionTypechecker());
+        return this->typecheck_(this->ast, proband_scope, ExpressionTypechecker(), false);
     }
 
-    Error Typechecker::typecheck_(const std::shared_ptr<Statement> &stmt, std::shared_ptr<TypecheckerScope> &scope, const ExpressionTypechecker &expression_typechecker) {
+    Error Typechecker::typecheck_(const std::shared_ptr<Statement> &stmt, std::shared_ptr<TypecheckerScope> &scope, const ExpressionTypechecker &expression_typechecker, const bool in_loop) {
         switch (stmt->type()) {
             case NodeType::BLOCK_STATEMENT: {
                 const std::shared_ptr<BlockStatement> block = std::static_pointer_cast<BlockStatement>(stmt);
                 std::shared_ptr<TypecheckerScope> child_scope = std::make_shared<TypecheckerScope>(scope);
-                for (const std::shared_ptr<Statement> &line : block->body()) {
-                    const Error error = this->typecheck_(line, child_scope, expression_typechecker);
+                size_t body_size = block->body().size();
+                for (size_t i = 0; i < body_size; i++) {
+                    const std::shared_ptr<Statement> line = block->body()[i];
+                    const Error error = this->typecheck_(line, child_scope, expression_typechecker, in_loop);
                     if (!error.type().empty()) {
                         return error;
+                    }
+
+                    if (line->type() == NodeType::BREAK_STATEMENT || line->type() == NodeType::CONTINUE_STATEMENT) {
+                        if (i != body_size-1) {
+                            return Error(block->body()[i+1]->start(), block->body()[body_size-1]->end(), "Control Flow Error", "unreachable code");
+                        }
+
+                        break;
                     }
                 }
 
@@ -388,7 +399,7 @@ namespace fluke {
                     return Error(if_else->condition()->start(), if_else->condition()->end(), "Type Error", "expected a 'bool' for the condition, got '" + condition_type.result() + "'");
                 }
 
-                const Error if_body = this->typecheck_(if_else->body(), scope, expression_typechecker);
+                const Error if_body = this->typecheck_(if_else->body(), scope, expression_typechecker, in_loop);
                 if (!if_body.type().empty()) {
                     return if_body;
                 }
@@ -397,7 +408,7 @@ namespace fluke {
                     return if_body;
                 }
 
-                return this->typecheck_(if_else->else_body(), scope, expression_typechecker);
+                return this->typecheck_(if_else->else_body(), scope, expression_typechecker, in_loop);
             } case NodeType::WHILE_STATEMENT: {
                 const std::shared_ptr<WhileStatement> while_loop = std::static_pointer_cast<WhileStatement>(stmt);
                 const Result<std::string> condition_type = expression_typechecker.get_type(while_loop->condition(), *scope);
@@ -409,7 +420,22 @@ namespace fluke {
                     return Error(while_loop->condition()->start(), while_loop->condition()->end(), "Type Error", "expected a 'bool' for the condition, got '" + condition_type.result() + "'");
                 }
 
-                return this->typecheck_(while_loop->body(), scope, expression_typechecker);
+                return this->typecheck_(while_loop->body(), scope, expression_typechecker, true);
+            } case NodeType::BREAK_STATEMENT:
+                if (!in_loop) {
+                    return Error(stmt->start(), stmt->end(), "Syntax Error", "'break' should not be outside of a loop");
+                }
+
+                return Error(stmt->start(), stmt->start(), "", "");
+            case NodeType::CONTINUE_STATEMENT:
+                if (!in_loop) {
+                    return Error(stmt->start(), stmt->end(), "Syntax Error", "'continue' should not be outside of a loop");
+                }
+
+                return Error(stmt->start(), stmt->start(), "", "");
+            case NodeType::FOREVER_STATEMENT: {
+                const std::shared_ptr<ForeverStatement> forever_loop = std::static_pointer_cast<ForeverStatement>(stmt);
+                return this->typecheck_(forever_loop->body(), scope, expression_typechecker, true);
             } default: {
                 const std::shared_ptr<Expression> expr = std::dynamic_pointer_cast<Expression>(stmt);
                 if (expr) {

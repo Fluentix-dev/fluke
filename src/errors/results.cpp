@@ -26,4 +26,5 @@ namespace fluke {
     template struct Result<std::shared_ptr<BlockStatement>>;
     template struct Result<std::shared_ptr<Type>>;
     template struct Result<std::string>;
+    template struct Result<bool>;
 }

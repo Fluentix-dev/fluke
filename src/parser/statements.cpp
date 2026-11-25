@@ -1,7 +1,6 @@
 #include "statements.hpp"
 #include "nodes.hpp"
 #include "types.hpp"
-#include "expressions.hpp"
 #include <vector>
 #include <memory>
 #include <string>
@@ -61,5 +60,12 @@ namespace fluke {
 
     std::shared_ptr<Statement> WhileStatement::body() const {
         return this-> body_;
+    }
+
+    BreakStatement::BreakStatement(const Position &start, const Position &end) : Statement(start, end, NodeType::BREAK_STATEMENT) {}
+    ContinueStatement::ContinueStatement(const Position &start, const Position &end) : Statement(start, end, NodeType::CONTINUE_STATEMENT) {}
+    ForeverStatement::ForeverStatement(const Position &start, const Position &end, const std::shared_ptr<Statement> &body) : Statement(start, end, NodeType::FOREVER_STATEMENT), body_(body) {}
+    std::shared_ptr<Statement> ForeverStatement::body() const {
+        return this->body_;
     }
 }

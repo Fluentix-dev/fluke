@@ -60,4 +60,20 @@ namespace fluke {
         std::shared_ptr<Expression> condition_;
         std::shared_ptr<Statement> body_;
     };
+
+    struct BreakStatement : public Statement {
+        BreakStatement(const Position &start, const Position &end); 
+    };
+
+    struct ContinueStatement : public Statement {
+        ContinueStatement(const Position &start, const Position &end);
+    };
+
+    struct ForeverStatement : public Statement {
+    public:
+        ForeverStatement(const Position &start, const Position &end, const std::shared_ptr<Statement> &body);
+        std::shared_ptr<Statement> body() const;
+    private:
+        std::shared_ptr<Statement> body_;
+    };
 }

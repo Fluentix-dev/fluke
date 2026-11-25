@@ -1,5 +1,6 @@
 #pragma once
 #include "../lexer/tokens.hpp"
+#include "nodes.hpp"
 #include "statements.hpp"
 #include "../errors/results.hpp"
 #include "types.hpp"
@@ -31,5 +32,8 @@ namespace fluke {
         Result<std::shared_ptr<Statement>> block();
         Result<std::shared_ptr<Statement>> if_statement();
         Result<std::shared_ptr<Statement>> while_statement();
+        Result<std::shared_ptr<Statement>> break_statement();
+        Result<std::shared_ptr<Statement>> continue_statement();
+        Result<std::shared_ptr<Statement>> forever();
     };
 }

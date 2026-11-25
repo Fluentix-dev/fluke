@@ -34,9 +34,12 @@ namespace fluke {
             {"if", TokenType::IF},
             {"else", TokenType::ELSE},
             {"while", TokenType::WHILE},
-            {"where", TokenType::WHERE}
+            {"where", TokenType::WHERE},
+            {"break", TokenType::BREAK},
+            {"continue", TokenType::CONTINUE},
+            {"forever", TokenType::FOREVER}
         };
-
+        
         std::vector<Token> tokens = {};
         while (this->index < this->src.size()) {
             switch (this->src[this->index]) {

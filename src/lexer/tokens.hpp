@@ -34,7 +34,10 @@ namespace fluke {
         IF,
         ELSE,
         WHILE,
-        WHERE
+        WHERE,
+        BREAK,
+        CONTINUE,
+        FOREVER
     };
 
     struct Token {

@@ -1,6 +1,7 @@
 #include "errors/results.hpp"
 #include "lexer/lexer.hpp"
 #include "lexer/tokens.hpp"
+#include "parser/nodes.hpp"
 #include "parser/parser.hpp"
 #include "parser/statements.hpp"
 #include "parser/expressions.hpp"
@@ -141,6 +142,18 @@ void debug_stmt(const std::shared_ptr<fluke::Statement> &stmt, const size_t inde
             std::cout << "\n";
             debug_stmt(while_statement->body(), indentation+1);
             break;
+        } case fluke::NodeType::BREAK_STATEMENT:
+            std::cout << "BREAK";
+            break;
+        case fluke::NodeType::CONTINUE_STATEMENT:
+            std::cout << "CONTINUE";
+            break;
+        case fluke::NodeType::FOREVER_STATEMENT: {
+            const std::shared_ptr<fluke::ForeverStatement> forever = std::static_pointer_cast<fluke::ForeverStatement>(stmt);
+            std::cout << "FOREVER\n";
+            if (forever->body() == nullptr) std::cout << "cooked";
+            else debug_stmt(forever->body(), indentation+1);
+            break;
         } default:
             debug_expr(std::static_pointer_cast<fluke::Expression>(stmt));
     }
@@ -154,7 +167,7 @@ int main(int argc, char* argv[]) {
 
     const std::string command = argv[1];
     if (command == "help") {
-        std::cout << "List of commands:\n[1] fluke --version: Shows the version of fluke that you are using\n[2] fluke help: Shows all the commands you can use\n[3] fluke clean: Clears the terminal\n[4] fluke conv <file_name>: Transpiles the code to C++";
+        std::cout << "List of commands:\n[1] fluke --version: Shows the version of fluke that you are using\n[2] fluke help: Shows all the commands you can use\n[3] fluke clean: Clears the terminal\n[4] fluke conv <file_name>: Transpiles the code to C++\n";
         return 0;
     }
 
