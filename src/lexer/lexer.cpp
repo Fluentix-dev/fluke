@@ -164,18 +164,7 @@ namespace fluke {
                 } case ':': {
                     const Position start = this->position;
                     this->advance();
-                    if (this->index >= this->src.size()) {
-                        tokens.push_back(Token(start, this->position, TokenType::COLON, ":"));
-                        continue;
-                    }
-
-                    if (this->src[this->index] == '=') {
-                        this->advance();
-                        tokens.push_back(Token(start, this->position, TokenType::DECLARE_EQUALS, ":="));
-                    } else {
-                        tokens.push_back(Token(start, this->position, TokenType::COLON, ":"));
-                    }
-
+                    tokens.push_back(Token(start, this->position, TokenType::COLON, ":"));
                     break;
                 } case '&': {
                     Position start = this->position;
@@ -183,7 +172,7 @@ namespace fluke {
                     if (this->index >= this->src.size()) {
                         start = this->position;
                         this->advance();
-                        return Result<std::vector<Token>>(tokens, Error(start, this->position, "Syntax Error", "expected '&', got '" + this->src[this->index]));
+                        return Result<std::vector<Token>>(tokens, Error(start, this->position, "Syntax Error", "expected '&'"));
                     }
 
                     if (this->src[this->index] == '&') {
@@ -202,7 +191,7 @@ namespace fluke {
                     if (this->index >= this->src.size()) {
                         start = this->position;
                         this->advance();
-                        return Result<std::vector<Token>>(tokens, Error(start, this->position, "Syntax Error", "expected '|', got '" + this->src[this->index]));
+                        return Result<std::vector<Token>>(tokens, Error(start, this->position, "Syntax Error", "expected '|', got '"));
                     }
 
                     if (this->src[this->index] == '|') {

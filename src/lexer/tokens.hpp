@@ -27,7 +27,6 @@ namespace fluke {
         NOT,
         LEFT_BRACE,
         RIGHT_BRACE,
-        DECLARE_EQUALS,
         LET,
         TRUE,
         FALSE,

@@ -24,7 +24,7 @@ namespace fluke {
     public:
         TypecheckerScope(const std::shared_ptr<TypecheckerScope> &parent);
         Error declare(const std::shared_ptr<Statement> &stmt, const ExpressionTypechecker &expression_typechecker);
-        Result<std::string> assign(const std::shared_ptr<AssignmentExpression> &expr, const ExpressionTypechecker &expression_typechecker);
+        Error assign(const std::shared_ptr<AssignmentStatement> &expr, const ExpressionTypechecker &expression_typechecker);
         Result<std::string> get_value(const std::shared_ptr<IdentifierExpression> &expr);
         std::shared_ptr<Statement> get_unused_variable() const;
     private:

@@ -68,4 +68,14 @@ namespace fluke {
     std::shared_ptr<Statement> ForeverStatement::body() const {
         return this->body_;
     }
+
+    AssignmentStatement::AssignmentStatement(const Position &start, const Position &end, const std::shared_ptr<Expression> &assigner, const std::shared_ptr<Expression> &assignee) : Statement(start, end, NodeType::ASSIGNMENT_STATEMENT), assigner_(assigner), assignee_(assignee) {}
+    std::shared_ptr<Expression> AssignmentStatement::assigner() const {
+        return this->assigner_;
+    }
+
+    std::shared_ptr<Expression> AssignmentStatement::assignee() const {
+        return this->assignee_;
+    }
 }
+

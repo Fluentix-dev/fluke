@@ -76,4 +76,14 @@ namespace fluke {
     private:
         std::shared_ptr<Statement> body_;
     };
+
+    struct AssignmentStatement : public Statement {
+    public:
+        AssignmentStatement(const Position &start, const Position &end, const std::shared_ptr<Expression> &assigner, const std::shared_ptr<Expression> &assignee);
+        std::shared_ptr<Expression> assigner() const;
+        std::shared_ptr<Expression> assignee() const;
+    private:
+        std::shared_ptr<Expression> assigner_;
+        std::shared_ptr<Expression> assignee_;
+    };
 }

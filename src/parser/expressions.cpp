@@ -3,15 +3,6 @@
 #include <memory>
 #include <string>
 namespace fluke {
-    AssignmentExpression::AssignmentExpression(const Position &start, const Position &end, const std::shared_ptr<Expression> &assigner, const std::shared_ptr<Expression> &assignee) : Expression(start, end, NodeType::ASSIGNMENT_EXPRESSION), assigner_(assigner), assignee_(assignee) {}
-    std::shared_ptr<Expression> AssignmentExpression::assigner() const {
-        return this->assigner_;
-    }
-
-    std::shared_ptr<Expression> AssignmentExpression::assignee() const {
-        return this->assignee_;
-    }
-    
     BinaryExpression::BinaryExpression(const Position &start, const Position &end, const std::shared_ptr<Expression> &lhs, const std::string &op, const std::shared_ptr<Expression> &rhs) : Expression(start, end, NodeType::BINARY_EXPRESSION), lhs_(lhs), op_(op), rhs_(rhs) {}
     std::shared_ptr<Expression> BinaryExpression::lhs() const {
         return this->lhs_;

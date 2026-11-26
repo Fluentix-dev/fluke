@@ -130,15 +130,7 @@ namespace fluke {
         switch (expr->type()) {
             case NodeType::GROUPING_EXPRESSION:
                 return this->get_type(std::static_pointer_cast<GroupExpression>(expr)->value(), scope);
-            case NodeType::ASSIGNMENT_EXPRESSION: {
-                const std::shared_ptr<AssignmentExpression> assignment_expression = std::static_pointer_cast<AssignmentExpression>(expr);
-                switch (assignment_expression->assigner()->type()) {
-                    case NodeType::IDENTIFIER_EXPRESSION:
-                        return scope.assign(assignment_expression, *this);
-                    default:
-                        return Result<std::string>("", Error(assignment_expression->start(), assignment_expression->end(), "Typechecker Error", "i hate when it breaks '" + std::to_string(static_cast<int>(assignment_expression->assigner()->type())) + "'"));
-                }
-            } case NodeType::BINARY_EXPRESSION: {
+            case NodeType::BINARY_EXPRESSION: {
                 const std::shared_ptr<BinaryExpression> binary_expression = std::static_pointer_cast<BinaryExpression>(expr);
                 const Result<std::string> lhs = this->get_type(binary_expression->lhs(), scope);
                 if (!lhs.error().type().empty()) {
@@ -281,7 +273,7 @@ namespace fluke {
         }
     }
 
-    Result<std::string> TypecheckerScope::assign(const std::shared_ptr<AssignmentExpression> &expr, const ExpressionTypechecker &expression_typechecker) {
+    Error TypecheckerScope::assign(const std::shared_ptr<AssignmentStatement> &expr, const ExpressionTypechecker &expression_typechecker) {
         const std::shared_ptr<IdentifierExpression> identifier_expression = std::static_pointer_cast<IdentifierExpression>(expr->assigner());
         std::shared_ptr<Statement> unused_variable = nullptr;
         if (this->unused_variables.count(identifier_expression->symbol())) {
@@ -291,11 +283,11 @@ namespace fluke {
         if (this->type_map.count(identifier_expression->symbol())) {
             const Result<std::string> value_type = expression_typechecker.get_type(expr->assignee(), *this);
             if (!value_type.error().type().empty()) {
-                return value_type;
+                return value_type.error();
             }
             
             if (!expression_typechecker.same_type(value_type.result(), this->type_map.at(identifier_expression->symbol()))) {
-                return Result<std::string>("", Error(expr->assignee()->start(), expr->assignee()->end(), "Type Error", "mismatched type, expected '" + this->type_map.at(identifier_expression->symbol()) + "', got '" + value_type.result() + "'"));
+                return Error(expr->assignee()->start(), expr->assignee()->end(), "Type Error", "mismatched type, expected '" + this->type_map.at(identifier_expression->symbol()) + "', got '" + value_type.result() + "'");
             }
             
             if (unused_variable != nullptr) {
@@ -304,11 +296,11 @@ namespace fluke {
                 }
             }
 
-            return Result<std::string>(this->type_map.at(identifier_expression->symbol()), Error(expr->start(), expr->start(), "", ""));
+            return Error(expr->start(), expr->start(), "", "");
         }
 
         if (this->parent == nullptr) {
-            return Result<std::string>("", Error(expr->start(), expr->end(), "Variable Error", "cannot assign to variable '" + identifier_expression->symbol() + "' as it is not declared yet"));
+            return Error(expr->start(), expr->end(), "Variable Error", "cannot assign to variable '" + identifier_expression->symbol() + "' as it is not declared yet");
         }
 
         return this->parent->assign(expr, expression_typechecker);
@@ -436,6 +428,14 @@ namespace fluke {
             case NodeType::FOREVER_STATEMENT: {
                 const std::shared_ptr<ForeverStatement> forever_loop = std::static_pointer_cast<ForeverStatement>(stmt);
                 return this->typecheck_(forever_loop->body(), scope, expression_typechecker, true);
+            } case NodeType::ASSIGNMENT_STATEMENT: {
+                const std::shared_ptr<AssignmentStatement> assignment = std::static_pointer_cast<AssignmentStatement>(stmt);
+                switch (assignment->assigner()->type()) {
+                    case NodeType::IDENTIFIER_EXPRESSION:
+                        return scope->assign(assignment, expression_typechecker);
+                    default:
+                        return Error(assignment->start(), assignment->end(), "Typechecker Error", "i hate when it breaks '" + std::to_string(static_cast<int>(assignment->assigner()->type())) + "'");
+                }
             } default: {
                 const std::shared_ptr<Expression> expr = std::dynamic_pointer_cast<Expression>(stmt);
                 if (expr) {

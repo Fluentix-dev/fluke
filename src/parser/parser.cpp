@@ -74,40 +74,22 @@ namespace fluke {
                     return Result<std::shared_ptr<Statement>>(nullptr, expr.error());
                 }
 
+                if (this->index < this->tokens.size() && this->tokens[this->index].type() == TokenType::EQUALS) {
+                    const Result<std::shared_ptr<Statement>> assignment = this->assignment(expr.result());
+                    if (!assignment.error().type().empty()) {
+                        return assignment;
+                    }
+
+                    return this->check_semicolon(assignment.result());
+                }
+
                 return this->check_semicolon(expr.result());
             }
         }
     }
 
     Result<std::shared_ptr<Expression>> Parser::expression() {
-        return this->assignment();
-    }
-
-    Result<std::shared_ptr<Expression>> Parser::assignment() {
-        const Result<std::shared_ptr<Expression>> lhs = this->or_();
-        if (!lhs.error().type().empty()) {
-            return lhs;
-        }
-
-        if (this->index >= this->tokens.size()) {
-            return lhs;
-        }
-
-        if (this->tokens[this->index].type() != TokenType::EQUALS) {
-            return lhs;
-        }
-
-        this->advance();
-        const Result<std::shared_ptr<Expression>> rhs = this->expression();
-        if (!rhs.error().type().empty()) {
-            return rhs;
-        }
-
-        if (lhs.result()->type() != NodeType::IDENTIFIER_EXPRESSION) {
-            return Result<std::shared_ptr<Expression>>(nullptr, Error(lhs.result()->start(), lhs.result()->end(), "Syntax Error", "expected a variable name"));
-        }
-
-        return Result<std::shared_ptr<Expression>>(std::make_shared<AssignmentExpression>(lhs.result()->start(), rhs.result()->end(), lhs.result(), rhs.result()), lhs.error());
+        return this->or_();
     }
 
     Result<std::shared_ptr<Expression>> Parser::or_() {
@@ -344,7 +326,7 @@ namespace fluke {
         switch (this->tokens[this->index].type()) {
             case TokenType::SEMICOLON:
                 return Result<std::shared_ptr<Statement>>(std::make_shared<NormalVariableDeclaration>(start, type.result()->end(), var_name, type.result(), nullptr), type.error());
-            case TokenType::DECLARE_EQUALS: {
+            case TokenType::EQUALS: {
                 this->advance();
                 const Result<std::shared_ptr<Expression>> value = this->expression();
                 if (!value.error().type().empty()) {
@@ -366,7 +348,7 @@ namespace fluke {
                 switch (this->tokens[this->index].type()) {
                     case TokenType::SEMICOLON:
                         return Result<std::shared_ptr<Statement>>(std::make_shared<VariableDeclarationWithExpressionCondition>(start, type.result()->end(), var_name, type.result(), condition.result(), nullptr), type.error());
-                    case TokenType::DECLARE_EQUALS: {
+                    case TokenType::EQUALS: {
                         this->advance();
                         const Result<std::shared_ptr<Expression>> value = this->expression();
                         if (!value.error().type().empty()) {
@@ -488,5 +470,19 @@ namespace fluke {
         }
 
         return Result<std::shared_ptr<Statement>>(std::make_shared<ForeverStatement>(start, body.result()->end(), body.result()), body.error());
+    }
+
+    Result<std::shared_ptr<Statement>> Parser::assignment(const std::shared_ptr<Expression> &assigner) {
+        this->advance();
+        const Result<std::shared_ptr<Expression>> assignee = this->expression();
+        if (!assignee.error().type().empty()) {
+            return Result<std::shared_ptr<Statement>>(nullptr, assignee.error());
+        }
+
+        if (assigner->type() != NodeType::IDENTIFIER_EXPRESSION) {
+            return Result<std::shared_ptr<Statement>>(nullptr, Error(assigner->start(), assigner->end(), "Syntax Error", "expected a variable name"));
+        }
+
+        return Result<std::shared_ptr<Statement>>(std::make_shared<AssignmentStatement>(assigner->start(), assignee.result()->end(), assigner, assignee.result()), assignee.error());
     }
 }

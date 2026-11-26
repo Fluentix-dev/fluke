@@ -34,15 +34,7 @@ void debug_expr(const std::shared_ptr<fluke::Expression> &expr) {
     }
 
     switch (expr->type()) {
-        case fluke::NodeType::ASSIGNMENT_EXPRESSION: {
-            const std::shared_ptr<fluke::AssignmentExpression> assignment_expression = std::static_pointer_cast<fluke::AssignmentExpression>(expr);
-            std::cout << "(";
-            debug_expr(assignment_expression->assigner());
-            std::cout << " = ";
-            debug_expr(assignment_expression->assignee());
-            std::cout << ")";
-            break;
-        } case fluke::NodeType::BINARY_EXPRESSION: {
+          case fluke::NodeType::BINARY_EXPRESSION: {
             const std::shared_ptr<fluke::BinaryExpression> binary_expression = std::static_pointer_cast<fluke::BinaryExpression>(expr);
             std::cout << "(";
             debug_expr(binary_expression->lhs());
@@ -153,6 +145,12 @@ void debug_stmt(const std::shared_ptr<fluke::Statement> &stmt, const size_t inde
             std::cout << "FOREVER\n";
             if (forever->body() == nullptr) std::cout << "cooked";
             else debug_stmt(forever->body(), indentation+1);
+            break;
+        } case fluke::NodeType::ASSIGNMENT_STATEMENT: {
+            const std::shared_ptr<fluke::AssignmentStatement> assignment = std::static_pointer_cast<fluke::AssignmentStatement>(stmt);
+            debug_expr(assignment->assigner());
+            std::cout << " = ";
+            debug_expr(assignment->assignee());
             break;
         } default:
             debug_expr(std::static_pointer_cast<fluke::Expression>(stmt));
